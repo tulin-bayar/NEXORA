@@ -1,4 +1,5 @@
 ﻿
+using InventoryManagementSystem.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
@@ -15,34 +16,14 @@ namespace InventoryManagementSystem.Views
         private ICollectionView categoriesView;
 
         private CategoryItem? selectedCategory;
+        private readonly CategoryService categoryService = new();
 
         public CategoriesView()
         {
             InitializeComponent();
 
-            categories.Add(new CategoryItem
-            {
-                CategoryId = 1,
-                Name = "Electronics",
-                Description = "Electronic devices and equipment",
-                ProductCount = 4
-            });
-
-            categories.Add(new CategoryItem
-            {
-                CategoryId = 2,
-                Name = "Furniture",
-                Description = "Office and home furniture",
-                ProductCount = 1
-            });
-
-            categories.Add(new CategoryItem
-            {
-                CategoryId = 3,
-                Name = "Accessories",
-                Description = "Computer and office accessories",
-                ProductCount = 2
-            });
+            // Load categories from SQL Server
+            LoadCategoriesFromDatabase();
 
             categoriesView = CollectionViewSource.GetDefaultView(categories);
 
@@ -51,57 +32,90 @@ namespace InventoryManagementSystem.Views
             UpdateStatistics();
         }
 
+        private void LoadCategoriesFromDatabase()
+        {
+            categories.Clear();
+
+            var databaseCategories =
+                categoryService.GetAllCategories();
+
+            foreach (var category in databaseCategories)
+            {
+                categories.Add(new CategoryItem
+                {
+                    CategoryId = category.CategoryId,
+                    Name = category.Name,
+                    Description = category.Description,
+                    ProductCount = category.Products.Count
+                });
+            }
+        }
+
+
+
         private void SaveCategoryButton_Click(object sender, RoutedEventArgs e)
         {
             string name = NewCategoryBox.Text.Trim();
             string description = DescriptionBox.Text.Trim();
 
+            // Validate category name
             if (string.IsNullOrWhiteSpace(name))
             {
-                MessageBox.Show("Please enter a category name.",
-                    "Validation",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-
+                MessageBox.Show("Please enter a category name.");
                 return;
             }
 
-            foreach (var category in categories)
+            // Check for duplicate categories
+            bool exists = categories.Any(c =>
+                c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
+                && c.CategoryId != (selectedCategory?.CategoryId ?? -1));
+
+            if (exists)
             {
-                if (category.Name.Equals(name,
-                    System.StringComparison.OrdinalIgnoreCase)
-                    && category != selectedCategory)
+                MessageBox.Show("This category already exists.");
+                return;
+            }
+
+            try
+            {
+                if (selectedCategory == null)
                 {
-                    MessageBox.Show("This category already exists.");
-                    return;
+                    // CREATE - Save new category to SQL Server
+                    categoryService.AddCategory(name, description);
                 }
-            }
-
-            if (selectedCategory == null)
-            {
-                int nextId = categories.Count == 0
-                    ? 1
-                    : categories.Max(c => c.CategoryId) + 1;
-
-                categories.Add(new CategoryItem
+                else
                 {
-                    CategoryId = nextId,
-                    Name = name,
-                    Description = description,
-                    ProductCount = 0
-                });
+                    // UPDATE - Save changes to SQL Server
+                    categoryService.UpdateCategory(
+                        selectedCategory.CategoryId,
+                        name,
+                        description);
+                }
+
+                // Reload categories from database
+                LoadCategoriesFromDatabase();
+
+                categoriesView.Refresh();
+
+                ResetForm();
+                UpdateStatistics();
+
+                MessageBox.Show(
+                    "Category saved successfully!",
+                    "Success",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
-            else
+            catch (Exception ex)
             {
-                selectedCategory.Name = name;
-                selectedCategory.Description = description;
+                MessageBox.Show(
+                    $"Error saving category: {ex.Message}",
+                    "Database Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
-
-            categoriesView.Refresh();
-
-            ResetForm();
-            UpdateStatistics();
         }
+
 
         private void EditCategoryButton_Click(object sender, RoutedEventArgs e)
         {
@@ -119,26 +133,62 @@ namespace InventoryManagementSystem.Views
             }
         }
 
-        private void DeleteCategoryButton_Click(object sender, RoutedEventArgs e)
+
+        private void DeleteCategoryButton_Click(
+            object sender, RoutedEventArgs e)
         {
-            if (sender is Button button &&
-                button.Tag is CategoryItem category)
+            if (sender is not Button button ||
+                button.Tag is not CategoryItem category)
             {
-                MessageBoxResult result = MessageBox.Show(
-                    $"Are you sure you want to delete '{category.Name}'?",
-                    "Confirm Delete",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                return;
+            }
 
-                if (result == MessageBoxResult.Yes)
-                {
-                    categories.Remove(category);
+            MessageBoxResult result = MessageBox.Show(
+                $"Are you sure you want to delete '{category.Name}'?",
+                "Confirm Delete",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
 
-                    ResetForm();
-                    UpdateStatistics();
-                }
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            try
+            {
+                // Delete category from SQL Server
+                categoryService.DeleteCategory(category.CategoryId);
+
+                // Reload categories from database
+                LoadCategoriesFromDatabase();
+
+                categoriesView.Refresh();
+
+                ResetForm();
+                UpdateStatistics();
+
+                MessageBox.Show(
+                    "Category deleted successfully!",
+                    "Success",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+            {
+                MessageBox.Show(
+                    "This category cannot be deleted because it has related products.",
+                    "Delete Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error deleting category: {ex.Message}",
+                    "Database Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
+
 
         private void CancelEditButton_Click(object sender, RoutedEventArgs e)
         {

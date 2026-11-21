@@ -1,5 +1,6 @@
 ﻿
 using System;
+using InventoryManagementSystem.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -15,6 +16,8 @@ namespace InventoryManagementSystem.Views
     {
         private readonly ObservableCollection<Product> products = new();
         private ICollectionView? productsView;
+        private readonly ProductService productService = new();
+        private readonly CategoryService categoryService = new();
 
         public ProductsView()
         {
@@ -24,78 +27,38 @@ namespace InventoryManagementSystem.Views
 
         // LOAD PRODUCTS
 
+
         private void LoadProducts()
         {
-            products.Add(new Product
-            {
-                ProductId = 1,
-                Name = "Wireless Mouse",
-                Category = "Electronics",
-                Quantity = 45,
-                Price = 25.00
-            });
+            // Clear existing items
+            products.Clear();
 
-            products.Add(new Product
-            {
-                ProductId = 2,
-                Name = "Office Chair",
-                Category = "Furniture",
-                Quantity = 12,
-                Price = 120.00
-            });
+            // Read products from SQL Server
+            var databaseProducts = productService.GetAllProducts();
 
-            products.Add(new Product
+            foreach (var product in databaseProducts)
             {
-                ProductId = 3,
-                Name = "USB Keyboard",
-                Category = "Electronics",
-                Quantity = 3,
-                Price = 40.00
-            });
+                products.Add(new Product
+                {
+                    ProductId = product.ProductId,
+                    Name = product.Name,
+                    Category = product.Category.Name,
+                    Quantity = product.Quantity,
+                    Price = (double)product.Price
+                });
+            }
 
-            products.Add(new Product
-            {
-                ProductId = 4,
-                Name = "Monitor",
-                Category = "Electronics",
-                Quantity = 20,
-                Price = 180.00
-            });
-
-            products.Add(new Product
-            {
-                ProductId = 5,
-                Name = "Desk Lamp",
-                Category = "Accessories",
-                Quantity = 2,
-                Price = 35.00
-            });
-
-            products.Add(new Product
-            {
-                ProductId = 6,
-                Name = "Laptop Stand",
-                Category = "Accessories",
-                Quantity = 15,
-                Price = 29.99
-            });
-
-            products.Add(new Product
-            {
-                ProductId = 7,
-                Name = "Mechanical Keyboard",
-                Category = "Electronics",
-                Quantity = 8,
-                Price = 89.99
-            });
-
+            // Configure search and filtering
             productsView = CollectionViewSource.GetDefaultView(products);
             productsView.Filter = FilterProducts;
 
+            // Show products in the table
             ProductsDataGrid.ItemsSource = productsView;
 
+            // Update statistics
             UpdateStatistics();
         }
+
 
         // SEARCH AND CATEGORY FILTER
 
@@ -168,26 +131,62 @@ namespace InventoryManagementSystem.Views
 
         // ADD PRODUCT
 
+
         private void AddProductButton_Click(
-            object sender,
-            RoutedEventArgs e)
+            object sender, RoutedEventArgs e)
         {
             Product? newProduct = ShowProductDialog(null);
 
             if (newProduct == null)
                 return;
 
-            int nextId = products.Count == 0
-                ? 1
-                : products.Max(p => p.ProductId) + 1;
+            try
+            {
+                // Find the selected category in SQL Server
+                var category = categoryService.GetAllCategories()
+                    .FirstOrDefault(c =>
+                        c.Name.Equals(
+                            newProduct.Category,
+                            StringComparison.OrdinalIgnoreCase));
 
-            newProduct.ProductId = nextId;
+                if (category == null)
+                {
+                    MessageBox.Show(
+                        "Selected category does not exist. " +
+                        "Please add it in Categories first.",
+                        "Category Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
 
-            products.Add(newProduct);
+                    return;
+                }
 
-            productsView?.Refresh();
-            UpdateStatistics();
+                // CREATE - Save product to SQL Server
+                productService.AddProduct(
+                    newProduct.Name,
+                    category.CategoryId,
+                    newProduct.Quantity,
+                    Math.Round((decimal)newProduct.Price, 2));
+
+                // Reload products from SQL Server
+                LoadProducts();
+
+                MessageBox.Show(
+                    "Product added successfully!",
+                    "Success",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error adding product: {ex.Message}",
+                    "Database Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
+
 
         // EDIT PRODUCT
 
