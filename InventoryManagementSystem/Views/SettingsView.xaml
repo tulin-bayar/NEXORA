@@ -1,0 +1,300 @@
+﻿<UserControl x:Class="InventoryManagementSystem.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="Accent" Color="#315B86"/>
+        <SolidColorBrush x:Key="TextDark" Color="#24364B"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#8793A3"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#E5EAF0"/>
+
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E5EAF0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="22"/>
+            <Setter Property="Margin" Value="0,0,0,18"/>
+        </Style>
+
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#536477"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,7"/>
+        </Style>
+
+        <Style x:Key="SettingsInput" TargetType="TextBox">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#24364B"/>
+            <Setter Property="Background" Value="#FAFBFD"/>
+            <Setter Property="BorderBrush" Value="#DCE3EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="SettingsCombo" TargetType="ComboBox">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#24364B"/>
+            <Setter Property="Background" Value="#FAFBFD"/>
+            <Setter Property="BorderBrush" Value="#DCE3EB"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="30,25,30,30">
+
+            <TextBlock Text="Settings"
+                       FontSize="25"
+                       FontWeight="Bold"
+                       Foreground="#24364B"/>
+
+            <TextBlock Text="Manage your application preferences and account information."
+                       FontSize="13"
+                       Foreground="#8793A3"
+                       Margin="0,7,0,25"/>
+
+            <!-- PROFILE -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Profile Settings"
+                               FontSize="17"
+                               FontWeight="SemiBold"
+                               Foreground="#24364B"/>
+
+                    <TextBlock Text="Manage your personal account details."
+                               Foreground="#8793A3"
+                               FontSize="12"
+                               Margin="0,5,0,20"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="25"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Full Name" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="FullNameBox"
+                                     Text="Administrator"
+                                     Style="{StaticResource SettingsInput}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Email Address" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="EmailBox"
+                                     Text="admin@nexora.com"
+                                     Style="{StaticResource SettingsInput}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Margin="0,17,0,0">
+                        <TextBlock Text="Account Role" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="System Administrator"
+                                 IsReadOnly="True"
+                                 Style="{StaticResource SettingsInput}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- GENERAL -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="General Settings"
+                               FontSize="17"
+                               FontWeight="SemiBold"
+                               Foreground="#24364B"/>
+
+                    <TextBlock Text="Configure your business and application preferences."
+                               Foreground="#8793A3"
+                               FontSize="12"
+                               Margin="0,5,0,20"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="25"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Company Name" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="CompanyNameBox"
+                                     Text="NEXORA"
+                                     Style="{StaticResource SettingsInput}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Currency" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="CurrencyBox"
+                                      SelectedIndex="0"
+                                      Style="{StaticResource SettingsCombo}">
+                                <ComboBoxItem Content="USD ($)"/>
+                                <ComboBoxItem Content="EUR (€)"/>
+                                <ComboBoxItem Content="HUF (Ft)"/>
+                                <ComboBoxItem Content="AZN (₼)"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Margin="0,17,0,0">
+                        <TextBlock Text="Language" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox x:Name="LanguageBox"
+                                  SelectedIndex="0"
+                                  Style="{StaticResource SettingsCombo}">
+                            <ComboBoxItem Content="English"/>
+                            <ComboBoxItem Content="Azerbaijani"/>
+                            <ComboBoxItem Content="Hungarian"/>
+                        </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- NOTIFICATIONS -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Notification Settings"
+                               FontSize="17"
+                               FontWeight="SemiBold"
+                               Foreground="#24364B"/>
+
+                    <TextBlock Text="Choose which notifications you want to receive."
+                               Foreground="#8793A3"
+                               FontSize="12"
+                               Margin="0,5,0,18"/>
+
+                    <CheckBox x:Name="LowStockNotification"
+                              Content="Low stock alerts"
+                              IsChecked="True"
+                              FontSize="13"
+                              Foreground="#536477"
+                              Margin="0,5"/>
+
+                    <CheckBox x:Name="MovementNotification"
+                              Content="Stock movement notifications"
+                              IsChecked="True"
+                              FontSize="13"
+                              Foreground="#536477"
+                              Margin="0,8"/>
+
+                    <CheckBox x:Name="SupplierNotification"
+                              Content="Supplier updates"
+                              IsChecked="False"
+                              FontSize="13"
+                              Foreground="#536477"
+                              Margin="0,8"/>
+                </StackPanel>
+            </Border>
+
+            <!-- APPEARANCE -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Appearance"
+                               FontSize="17"
+                               FontWeight="SemiBold"
+                               Foreground="#24364B"/>
+
+                    <TextBlock Text="Choose your preferred interface theme."
+                               Foreground="#8793A3"
+                               FontSize="12"
+                               Margin="0,5,0,18"/>
+
+                    <ComboBox x:Name="ThemeBox"
+                              SelectedIndex="0"
+                              Style="{StaticResource SettingsCombo}">
+                        <ComboBoxItem Content="Light Mode"/>
+                        <ComboBoxItem Content="Dark Mode (Coming Soon)"/>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+
+            <!-- SYSTEM INFO -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="System Information"
+                               FontSize="17"
+                               FontWeight="SemiBold"
+                               Foreground="#24364B"/>
+
+                    <Grid Margin="0,17,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Application Name"
+                                   Foreground="#8793A3"
+                                   FontSize="13"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="NEXORA Inventory Management"
+                                   Foreground="#24364B"
+                                   FontWeight="SemiBold"
+                                   FontSize="13"/>
+                    </Grid>
+
+                    <Separator Margin="0,13" Background="#E5EAF0"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Version"
+                                   Foreground="#8793A3"
+                                   FontSize="13"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="1.0.0"
+                                   Foreground="#24364B"
+                                   FontWeight="SemiBold"
+                                   FontSize="13"/>
+                    </Grid>
+
+                    <Separator Margin="0,13" Background="#E5EAF0"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Platform"
+                                   Foreground="#8793A3"
+                                   FontSize="13"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="Windows Desktop"
+                                   Foreground="#24364B"
+                                   FontWeight="SemiBold"
+                                   FontSize="13"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- SAVE -->
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <TextBlock x:Name="SaveStatusText"
+                           VerticalAlignment="Center"
+                           Foreground="#23845B"
+                           FontSize="12"
+                           Margin="0,0,15,0"/>
+
+                <Button Content="Save Changes"
+                        Click="SaveChangesButton_Click"
+                        Background="#315B86"
+                        Foreground="White"
+                        FontWeight="SemiBold"
+                        FontSize="13"
+                        Padding="23,12"
+                        BorderThickness="0"
+                        Cursor="Hand"/>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

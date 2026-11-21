@@ -1,0 +1,300 @@
+﻿<Window x:Class="InventoryManagementSystem.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:InventoryManagementSystem.Views"
+        Title="NEXORA | Inventory Management"
+        Height="850"
+        Width="1450"
+        MinHeight="700"
+        MinWidth="1150"
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F6F9">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="SidebarBrush" Color="#17283F"/>
+
+        <Style x:Key="MenuButton" TargetType="{x:Type Button}">
+            <Setter Property="Height" Value="46"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Foreground" Value="#C5CEDA"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="245"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- SIDEBAR -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
+            <DockPanel>
+
+                <StackPanel DockPanel.Dock="Top" Margin="25,30,25,35">
+                    <TextBlock Text="NEXORA"
+                               Foreground="White"
+                               FontSize="27"
+                               FontWeight="Bold"/>
+                    <TextBlock Text="INVENTORY MANAGEMENT"
+                               Foreground="#91A3BA"
+                               FontSize="9"
+                               Margin="2,5,0,0"/>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom" Margin="25,0,25,25">
+                    <Separator Background="#34465E" Margin="0,0,0,17"/>
+                    <TextBlock Text="NEXORA Inventory"
+                               Foreground="White"
+                               FontSize="12"
+                               FontWeight="SemiBold"/>
+                    <TextBlock Text="Version 1.0.0"
+                               Foreground="#91A3BA"
+                               FontSize="10"
+                               Margin="0,5,0,0"/>
+                </StackPanel>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="15,0">
+
+                        <TextBlock Text="MAIN MENU"
+                                   Foreground="#8192A9"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Margin="13,0,0,12"/>
+
+                        <Button x:Name="DashboardButton"
+                                Style="{StaticResource MenuButton}"
+                                Content="▦   Dashboard"
+                                Click="DashboardButton_Click"/>
+
+                        <Button x:Name="ProductsButton"
+                                Style="{StaticResource MenuButton}"
+                                Content="▣   Products"
+                                Click="ProductsButton_Click"/>
+
+                        <Button x:Name="CategoriesButton"
+                                Style="{StaticResource MenuButton}"
+                                Content="▤   Categories"
+                                Click="CategoriesButton_Click"/>
+
+                        <Button x:Name="StockMovementsButton"
+                                Style="{StaticResource MenuButton}"
+                                Content="↕   Stock Movements"
+                                Click="StockMovementsButton_Click"/>
+
+                        <Button x:Name="SuppliersButton"
+                                Style="{StaticResource MenuButton}"
+                                Content="▧   Suppliers"
+                                Click="SuppliersButton_Click"/>
+
+                        <TextBlock Text="ANALYTICS"
+                                   Foreground="#8192A9"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Margin="13,27,0,12"/>
+
+                        <Button x:Name="ReportsButton"
+                                Style="{StaticResource MenuButton}"
+                                Content="▥   Reports"
+                                Click="ReportsButton_Click"/>
+
+                        <TextBlock Text="PREFERENCES"
+                                   Foreground="#8192A9"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Margin="13,27,0,12"/>
+
+                        <Button x:Name="SettingsButton"
+                                Style="{StaticResource MenuButton}"
+                                Content="⚙   Settings"
+                                Click="SettingsButton_Click"/>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- CONTENT -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="75"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Background="White"
+                    BorderBrush="#E5EAF0"
+                    BorderThickness="0,0,0,1">
+                <Grid Margin="30,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="PageTitleText"
+                               Text="Dashboard"
+                               FontSize="21"
+                               FontWeight="Bold"
+                               Foreground="#24364B"
+                               VerticalAlignment="Center"/>
+
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="Administrator"
+                                   Foreground="#24364B"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Right"/>
+                        <TextBlock Text="System Manager"
+                                   Foreground="#8793A3"
+                                   FontSize="10"
+                                   HorizontalAlignment="Right"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1">
+
+                <ScrollViewer x:Name="DashboardView"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="30">
+
+                        <TextBlock Text="Welcome back, Administrator"
+                                   FontSize="25"
+                                   FontWeight="Bold"
+                                   Foreground="#24364B"/>
+
+                        <TextBlock Text="Here is what's happening with your inventory today."
+                                   FontSize="13"
+                                   Foreground="#8793A3"
+                                   Margin="0,7,0,25"/>
+
+                        <UniformGrid Columns="4" Margin="0,0,0,25">
+
+                            <Border Background="White" CornerRadius="10" Padding="20" Margin="0,0,10,0">
+                                <StackPanel>
+                                    <TextBlock Text="TOTAL PRODUCTS" Foreground="#8793A3" FontSize="10"/>
+                                    <TextBlock Text="7" Foreground="#24364B" FontSize="29" FontWeight="Bold" Margin="0,10,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="White" CornerRadius="10" Padding="20" Margin="4,0,8,0">
+                                <StackPanel>
+                                    <TextBlock Text="TOTAL STOCK" Foreground="#8793A3" FontSize="10"/>
+                                    <TextBlock Text="105" Foreground="#24364B" FontSize="29" FontWeight="Bold" Margin="0,10,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="White" CornerRadius="10" Padding="20" Margin="8,0,4,0">
+                                <StackPanel>
+                                    <TextBlock Text="LOW STOCK" Foreground="#8793A3" FontSize="10"/>
+                                    <TextBlock Text="3" Foreground="#D58B36" FontSize="29" FontWeight="Bold" Margin="0,10,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="White" CornerRadius="10" Padding="20" Margin="12,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="SUPPLIERS" Foreground="#8793A3" FontSize="10"/>
+                                    <TextBlock Text="4" Foreground="#24364B" FontSize="29" FontWeight="Bold" Margin="0,10,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                        </UniformGrid>
+
+                        <Border Background="White"
+                                CornerRadius="12"
+                                Padding="22"
+                                Margin="0,0,0,22">
+                            <StackPanel>
+                                <TextBlock Text="Inventory Overview"
+                                           FontSize="17"
+                                           FontWeight="SemiBold"
+                                           Foreground="#24364B"/>
+
+                                <TextBlock Text="Manage your inventory operations from one place."
+                                           Foreground="#8793A3"
+                                           FontSize="12"
+                                           Margin="0,7,0,20"/>
+
+                                <WrapPanel>
+                                    <Button Content="View Products"
+                                            Click="ProductsButton_Click"
+                                            Background="#315B86"
+                                            Foreground="White"
+                                            Padding="18,11"
+                                            Margin="0,0,10,0"
+                                            BorderThickness="0"/>
+
+                                    <Button Content="Stock Movements"
+                                            Click="StockMovementsButton_Click"
+                                            Background="#EDF2F7"
+                                            Foreground="#315B86"
+                                            Padding="18,11"
+                                            Margin="0,0,10,0"
+                                            BorderThickness="0"/>
+
+                                    <Button Content="View Reports"
+                                            Click="ReportsButton_Click"
+                                            Background="#EDF2F7"
+                                            Foreground="#315B86"
+                                            Padding="18,11"
+                                            BorderThickness="0"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="White" CornerRadius="12" Padding="22">
+                            <StackPanel>
+                                <TextBlock Text="Recent Activity"
+                                           FontSize="17"
+                                           FontWeight="SemiBold"
+                                           Foreground="#24364B"
+                                           Margin="0,0,0,15"/>
+
+                                <TextBlock Text="Wireless Mouse — Stock In: 10 units"
+                                           Foreground="#536477"
+                                           FontSize="12"
+                                           Margin="0,8"/>
+
+                                <Separator/>
+
+                                <TextBlock Text="USB Keyboard — Stock Out: 2 units"
+                                           Foreground="#536477"
+                                           FontSize="12"
+                                           Margin="0,8"/>
+
+                                <Separator/>
+
+                                <TextBlock Text="Office Chair — Stock In: 5 units"
+                                           Foreground="#536477"
+                                           FontSize="12"
+                                           Margin="0,8"/>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <views:ProductsView x:Name="ProductsPage" Visibility="Collapsed"/>
+
+                <views:CategoriesView x:Name="CategoriesPage" Visibility="Collapsed"/>
+
+                <views:StockMovementsView x:Name="StockMovementsPage" Visibility="Collapsed"/>
+
+                <views:SuppliersView x:Name="SuppliersPage" Visibility="Collapsed"/>
+
+                <views:ReportsView x:Name="ReportsPage" Visibility="Collapsed"/>
+
+                <views:SettingsView x:Name="SettingsPage" Visibility="Collapsed"/>
+
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

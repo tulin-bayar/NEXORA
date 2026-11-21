@@ -1,0 +1,288 @@
+﻿<UserControl x:Class="InventoryManagementSystem.Views.ReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F3F5F9">
+
+    <UserControl.Resources>
+
+        <Style x:Key="ReportCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="BorderBrush" Value="#E8ECF2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style x:Key="ExportButton" TargetType="Button">
+            <Setter Property="Background" Value="#263D5B"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="18,11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="30">
+
+            <!-- HEADER -->
+            <Grid Margin="0,0,0,25">
+                <StackPanel>
+                    <TextBlock Text="Reports &amp; Analytics"
+                               FontSize="27"
+                               FontWeight="Bold"
+                               Foreground="#17283F"/>
+
+                    <TextBlock Text="Monitor inventory performance and generate reports"
+                               FontSize="13"
+                               Foreground="#8792A2"
+                               Margin="0,7,0,0"/>
+                </StackPanel>
+
+                <Button Content="Export CSV"
+                        Style="{StaticResource ExportButton}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Click="ExportButton_Click"/>
+            </Grid>
+
+            <!-- SUMMARY CARDS -->
+            <UniformGrid Columns="4" Margin="0,0,0,22">
+
+                <Border Style="{StaticResource ReportCard}"
+                        Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="TOTAL PRODUCTS"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="#8792A2"/>
+                        <TextBlock x:Name="TotalProductsText"
+                                   Text="7"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#17283F"
+                                   Margin="0,12,0,4"/>
+                        <TextBlock Text="Registered products"
+                                   FontSize="11"
+                                   Foreground="#8994A3"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource ReportCard}"
+                        Margin="5,0">
+                    <StackPanel>
+                        <TextBlock Text="TOTAL STOCK"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="#8792A2"/>
+                        <TextBlock x:Name="TotalStockText"
+                                   Text="105"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#263D5B"
+                                   Margin="0,12,0,4"/>
+                        <TextBlock Text="Units available"
+                                   FontSize="11"
+                                   Foreground="#8994A3"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource ReportCard}"
+                        Margin="5,0">
+                    <StackPanel>
+                        <TextBlock Text="STOCK VALUE"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="#8792A2"/>
+                        <TextBlock x:Name="StockValueText"
+                                   Text="$0.00"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#239B72"
+                                   Margin="0,12,0,4"/>
+                        <TextBlock Text="Estimated inventory value"
+                                   FontSize="11"
+                                   Foreground="#8994A3"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource ReportCard}"
+                        Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="LOW STOCK ITEMS"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="#8792A2"/>
+                        <TextBlock x:Name="LowStockText"
+                                   Text="0"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#D18B36"
+                                   Margin="0,12,0,4"/>
+                        <TextBlock Text="Require attention"
+                                   FontSize="11"
+                                   Foreground="#8994A3"/>
+                    </StackPanel>
+                </Border>
+
+            </UniformGrid>
+
+            <!-- INVENTORY REPORT -->
+            <Border Style="{StaticResource ReportCard}"
+                    Margin="0,0,0,22">
+
+                <StackPanel>
+                    <TextBlock Text="Inventory Summary"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="#17283F"
+                               Margin="0,0,0,18"/>
+
+                    <DataGrid x:Name="InventoryDataGrid"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="None"
+                              RowHeight="45"
+                              ColumnHeaderHeight="40"
+                              Background="White"
+                              BorderThickness="0"
+                              AlternatingRowBackground="#F8FAFC">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Product"
+                                                Binding="{Binding ProductName}"
+                                                Width="*"/>
+
+                            <DataGridTextColumn Header="Category"
+                                                Binding="{Binding Category}"
+                                                Width="*"/>
+
+                            <DataGridTextColumn Header="Quantity"
+                                                Binding="{Binding Quantity}"
+                                                Width="100"/>
+
+                            <DataGridTextColumn Header="Unit Price"
+                                                Binding="{Binding UnitPrice, StringFormat=C2}"
+                                                Width="120"/>
+
+                            <DataGridTextColumn Header="Total Value"
+                                                Binding="{Binding TotalValue, StringFormat=C2}"
+                                                Width="130"/>
+
+                            <DataGridTextColumn Header="Status"
+                                                Binding="{Binding Status}"
+                                                Width="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- STOCK MOVEMENT REPORT -->
+            <Border Style="{StaticResource ReportCard}"
+                    Margin="0,0,0,22">
+
+                <StackPanel>
+                    <TextBlock Text="Stock Movement Summary"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="#17283F"
+                               Margin="0,0,0,18"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Background="#EDF7F2"
+                                CornerRadius="10"
+                                Padding="18"
+                                Margin="0,0,10,0">
+                            <StackPanel>
+                                <TextBlock Text="TOTAL STOCK IN"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="#56866D"/>
+
+                                <TextBlock x:Name="StockInText"
+                                           Text="10"
+                                           FontSize="25"
+                                           FontWeight="Bold"
+                                           Foreground="#239B72"
+                                           Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Background="#FFF2EF"
+                                CornerRadius="10"
+                                Padding="18"
+                                Margin="10,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="TOTAL STOCK OUT"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="#B87568"/>
+
+                                <TextBlock x:Name="StockOutText"
+                                           Text="2"
+                                           FontSize="25"
+                                           FontWeight="Bold"
+                                           Foreground="#C45D50"
+                                           Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- LOW STOCK REPORT -->
+            <Border Style="{StaticResource ReportCard}">
+                <StackPanel>
+                    <TextBlock Text="Low Stock Report"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="#17283F"
+                               Margin="0,0,0,15"/>
+
+                    <DataGrid x:Name="LowStockDataGrid"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="None"
+                              RowHeight="43"
+                              ColumnHeaderHeight="40"
+                              Background="White"
+                              BorderThickness="0"
+                              AlternatingRowBackground="#F8FAFC">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Product"
+                                                Binding="{Binding ProductName}"
+                                                Width="*"/>
+
+                            <DataGridTextColumn Header="Category"
+                                                Binding="{Binding Category}"
+                                                Width="*"/>
+
+                            <DataGridTextColumn Header="Available Quantity"
+                                                Binding="{Binding Quantity}"
+                                                Width="160"/>
+
+                            <DataGridTextColumn Header="Status"
+                                                Binding="{Binding Status}"
+                                                Width="130"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

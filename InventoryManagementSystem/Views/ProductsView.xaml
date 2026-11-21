@@ -1,0 +1,403 @@
+﻿<UserControl x:Class="InventoryManagementSystem.Views.ProductsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F3F5F9">
+
+    <UserControl.Resources>
+
+        <SolidColorBrush x:Key="Blue" Color="#4169E1"/>
+        <SolidColorBrush x:Key="Dark" Color="#19283F"/>
+        <SolidColorBrush x:Key="Muted" Color="#8995A8"/>
+
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="BorderBrush" Value="#E9EDF3"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="20"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#4169E1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="19,12"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="ColumnHeader" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F3F6FB"/>
+            <Setter Property="Foreground" Value="#34445D"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="13,17"/>
+            <Setter Property="BorderBrush" Value="#E9EDF3"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+
+        <Style x:Key="InputStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#26364D"/>
+            <Setter Property="BorderBrush" Value="#E1E6EF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="ProductCellStyle" TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="#26364D"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Padding" Value="13,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        </Style>
+
+        <Style x:Key="ProductRowStyle" TargetType="DataGridRow">
+            <Setter Property="Foreground" Value="#26364D"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#EDF0F5"/>
+            <Setter Property="MinHeight" Value="58"/>
+
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EEF3FF"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E5EDFF"/>
+                    <Setter Property="Foreground" Value="#26364D"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Auto">
+
+        <Grid Margin="30">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- HEADER -->
+
+            <Grid Grid.Row="0" Margin="0,0,0,27">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="INVENTORY / CATALOG"
+                               Foreground="#4169E1"
+                               FontSize="10"
+                               FontWeight="Bold"/>
+
+                    <TextBlock Text="Product Management"
+                               Foreground="#19283F"
+                               FontSize="29"
+                               FontWeight="Bold"
+                               Margin="0,8,0,0"/>
+
+                    <TextBlock Text="Organize products, track stock and manage your catalog."
+                               Foreground="#8995A8"
+                               FontSize="12"
+                               Margin="0,7,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Content="+   Add New Product"
+                        Style="{StaticResource PrimaryButton}"
+                        VerticalAlignment="Center"
+                        Click="AddProductButton_Click"/>
+            </Grid>
+
+            <!-- STATISTICS -->
+
+            <UniformGrid Grid.Row="1"
+                         Columns="4"
+                         Margin="0,0,0,23">
+
+                <Border Style="{StaticResource Card}"
+                        Margin="0,0,13,0">
+                    <StackPanel>
+                        <TextBlock Text="TOTAL PRODUCTS"
+                                   Foreground="#8995A8"
+                                   FontSize="10"
+                                   FontWeight="Bold"/>
+
+                        <TextBlock x:Name="TotalProductsText"
+                                   Text="7"
+                                   Foreground="#19283F"
+                                   FontSize="31"
+                                   FontWeight="Bold"
+                                   Margin="0,13,0,5"/>
+
+                        <TextBlock Text="Registered products"
+                                   Foreground="#8995A8"
+                                   FontSize="11"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}"
+                        Margin="0,0,13,0">
+                    <StackPanel>
+                        <TextBlock Text="IN STOCK"
+                                   Foreground="#8995A8"
+                                   FontSize="10"
+                                   FontWeight="Bold"/>
+
+                        <TextBlock x:Name="InStockText"
+                                   Text="4"
+                                   Foreground="#15966B"
+                                   FontSize="31"
+                                   FontWeight="Bold"
+                                   Margin="0,13,0,5"/>
+
+                        <TextBlock Text="Available items"
+                                   Foreground="#8995A8"
+                                   FontSize="11"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}"
+                        Margin="0,0,13,0">
+                    <StackPanel>
+                        <TextBlock Text="LOW STOCK"
+                                   Foreground="#8995A8"
+                                   FontSize="10"
+                                   FontWeight="Bold"/>
+
+                        <TextBlock x:Name="LowStockText"
+                                   Text="3"
+                                   Foreground="#E49A38"
+                                   FontSize="31"
+                                   FontWeight="Bold"
+                                   Margin="0,13,0,5"/>
+
+                        <TextBlock Text="Require attention"
+                                   Foreground="#8995A8"
+                                   FontSize="11"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="CATEGORIES"
+                                   Foreground="#8995A8"
+                                   FontSize="10"
+                                   FontWeight="Bold"/>
+
+                        <TextBlock x:Name="CategoriesText"
+                                   Text="3"
+                                   Foreground="#4169E1"
+                                   FontSize="31"
+                                   FontWeight="Bold"
+                                   Margin="0,13,0,5"/>
+
+                        <TextBlock Text="Product groups"
+                                   Foreground="#8995A8"
+                                   FontSize="11"/>
+                    </StackPanel>
+                </Border>
+
+            </UniformGrid>
+
+            <!-- SEARCH AND FILTER -->
+
+            <Border Grid.Row="2"
+                    Style="{StaticResource Card}"
+                    Margin="0,0,0,20">
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="SEARCH"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="#778398"
+                                   Margin="0,0,0,9"/>
+
+                        <TextBox x:Name="SearchBox"
+                                 Style="{StaticResource InputStyle}"
+                                 ToolTip="Search by product name or category"
+                                 TextChanged="SearchBox_TextChanged"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="FILTER BY CATEGORY"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="#778398"
+                                   Margin="0,0,0,9"/>
+
+                        <ComboBox x:Name="CategoryComboBox"
+                                  Height="40"
+                                  Padding="9"
+                                  FontSize="12"
+                                  Foreground="#26364D"
+                                  SelectedIndex="0"
+                                  SelectionChanged="CategoryComboBox_SelectionChanged">
+
+                            <ComboBoxItem Content="All Categories"/>
+                            <ComboBoxItem Content="Electronics"/>
+                            <ComboBoxItem Content="Furniture"/>
+                            <ComboBoxItem Content="Accessories"/>
+
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ALL PRODUCTS -->
+
+            <Border Grid.Row="3"
+                    Style="{StaticResource Card}">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="18"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="All Products"
+                                       FontSize="18"
+                                       FontWeight="Bold"
+                                       Foreground="#19283F"/>
+
+                            <TextBlock Text="Your complete inventory catalog"
+                                       FontSize="11"
+                                       Foreground="#8995A8"
+                                       Margin="0,5,0,0"/>
+                        </StackPanel>
+
+                        <Border Grid.Column="1"
+                                Background="#EAF7F1"
+                                CornerRadius="7"
+                                Padding="11,7"
+                                VerticalAlignment="Center">
+
+                            <TextBlock Text="●  INVENTORY ACTIVE"
+                                       FontSize="9"
+                                       FontWeight="Bold"
+                                       Foreground="#15966B"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- PRODUCTS TABLE -->
+
+                    <DataGrid x:Name="ProductsDataGrid"
+                              Grid.Row="2"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="None"
+                              RowHeight="65"
+                              MinWidth="1250"
+                              Background="White"
+                              Foreground="#26364D"
+                              BorderThickness="0"
+                              FontSize="13"
+                              FontWeight="Medium"
+                              ColumnHeaderStyle="{StaticResource ColumnHeader}"
+                              CellStyle="{StaticResource ProductCellStyle}"
+                              RowStyle="{StaticResource ProductRowStyle}"
+                              AlternatingRowBackground="#F5F8FD"
+                              RowBackground="White"
+                              SelectionMode="Single"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto">
+
+                        <DataGrid.Columns>
+
+                            <DataGridTextColumn Header="ID"
+                                                Binding="{Binding ProductId}"
+                                                Width="80"/>
+
+                            <DataGridTextColumn Header="PRODUCT NAME"
+                                                Binding="{Binding Name}"
+                                                Width="300"/>
+
+                            <DataGridTextColumn Header="CATEGORY"
+                                                Binding="{Binding Category}"
+                                                Width="200"/>
+
+                            <DataGridTextColumn Header="QUANTITY"
+                                                Binding="{Binding Quantity}"
+                                                Width="140"/>
+
+                            <DataGridTextColumn Header="UNIT PRICE"
+                                                Binding="{Binding Price, StringFormat={}{0:F2}}"
+                                                Width="150"/>
+
+                            <DataGridTextColumn Header="STATUS"
+                                                Binding="{Binding Status}"
+                                                Width="160"/>
+
+                            <DataGridTemplateColumn Header="ACTIONS"
+                                                    Width="190">
+
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal"
+                                                    VerticalAlignment="Center">
+
+                                            <Button Content="Edit"
+                                                    Width="65"
+                                                    Height="30"
+                                                    Margin="0,0,8,0"
+                                                    Background="#EAF0FF"
+                                                    Foreground="#4169E1"
+                                                    BorderThickness="0"
+                                                    FontWeight="SemiBold"
+                                                    Cursor="Hand"
+                                                    Click="EditProductButton_Click"/>
+
+                                            <Button Content="Delete"
+                                                    Width="70"
+                                                    Height="30"
+                                                    Background="#FFF0F0"
+                                                    Foreground="#D64545"
+                                                    BorderThickness="0"
+                                                    FontWeight="SemiBold"
+                                                    Cursor="Hand"
+                                                    Click="DeleteProductButton_Click"/>
+
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+
+                            </DataGridTemplateColumn>
+
+                        </DataGrid.Columns>
+
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+        </Grid>
+    </ScrollViewer>
+</UserControl>
