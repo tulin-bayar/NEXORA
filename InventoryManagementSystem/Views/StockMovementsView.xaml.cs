@@ -6,59 +6,96 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Media;
+using InventoryManagementSystem.Dialogs;
+using InventoryManagementSystem.Services;
 
 namespace InventoryManagementSystem.Views
 {
     public partial class StockMovementsView : UserControl
     {
         private readonly ObservableCollection<StockMovement> movements = new();
+
         private ICollectionView? movementsView;
+
+        private readonly StockMovementService movementService = new();
+        private readonly ProductService productService = new();
 
         public StockMovementsView()
         {
             InitializeComponent();
 
-            MovementsDataGrid.ItemsSource = movements;
+            movementsView =
+                CollectionViewSource.GetDefaultView(movements);
 
-            movementsView = CollectionViewSource.GetDefaultView(movements);
             movementsView.Filter = FilterMovements;
 
-            LoadSampleMovements();
+            MovementsDataGrid.ItemsSource = movementsView;
+
+            try
+            {
+                LoadMovements();
+            }
+            catch (Exception ex)
+            {
+                ShowMessage("Database Error", ex.Message);
+            }
+
+            // Refresh when returning to this page
+            IsVisibleChanged += (sender, e) =>
+            {
+                if (e.NewValue is bool visible && visible)
+                {
+                    try
+                    {
+                        LoadMovements();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Database Error", ex.Message);
+                    }
+                }
+            };
+        }
+
+        // =====================================
+        // LOAD MOVEMENTS FROM SQL SERVER
+        // =====================================
+
+        private void LoadMovements()
+        {
+            movements.Clear();
+
+            var databaseMovements =
+                movementService.GetAllMovements();
+
+            foreach (var movement in databaseMovements)
+            {
+                movements.Add(new StockMovement
+                {
+                    MovementId = movement.MovementId,
+
+                    ProductName =
+                        movement.Product?.Name ?? "Unknown Product",
+
+                    MovementType = movement.MovementType,
+
+                    Quantity = movement.Quantity,
+
+                    MovementDate = movement.MovementDate,
+
+                    Note = movement.Note
+                });
+            }
+
+            movementsView?.Refresh();
+
             UpdateStatistics();
         }
 
-        private void LoadSampleMovements()
-        {
-            movements.Add(new StockMovement
-            {
-                MovementId = 1,
-                ProductName = "Wireless Mouse",
-                MovementType = "Stock In",
-                Quantity = 10,
-                MovementDate = DateTime.Now.AddHours(-5),
-                Note = "New delivery"
-            });
-
-            movements.Add(new StockMovement
-            {
-                MovementId = 2,
-                ProductName = "USB Keyboard",
-                MovementType = "Stock Out",
-                Quantity = 2,
-                MovementDate = DateTime.Now.AddHours(-3),
-                Note = "Sales order"
-            });
-
-            movements.Add(new StockMovement
-            {
-                MovementId = 3,
-                ProductName = "Office Chair",
-                MovementType = "Stock In",
-                Quantity = 5,
-                MovementDate = DateTime.Now.AddDays(-1),
-                Note = "Supplier delivery"
-            });
-        }
+        // =====================================
+        // SEARCH AND FILTER
+        // =====================================
 
         private bool FilterMovements(object item)
         {
@@ -67,17 +104,17 @@ namespace InventoryManagementSystem.Views
 
             string search = SearchBox.Text?.Trim() ?? "";
 
-            bool matchesSearch = movement.ProductName.Contains(
-                search,
-                StringComparison.OrdinalIgnoreCase
-            );
+            bool matchesSearch =
+                movement.ProductName.Contains(
+                    search,
+                    StringComparison.OrdinalIgnoreCase);
 
             string selectedType = "All Movements";
 
             if (MovementFilter.SelectedItem is ComboBoxItem selected)
             {
-                selectedType = selected.Content?.ToString()
-                               ?? "All Movements";
+                selectedType =
+                    selected.Content?.ToString() ?? "All Movements";
             }
 
             bool matchesType =
@@ -101,12 +138,20 @@ namespace InventoryManagementSystem.Views
             movementsView?.Refresh();
         }
 
+        // =====================================
+        // STOCK IN BUTTON
+        // =====================================
+
         private void StockInButton_Click(
             object sender,
             RoutedEventArgs e)
         {
             AddMovement("Stock In");
         }
+
+        // =====================================
+        // STOCK OUT BUTTON
+        // =====================================
 
         private void StockOutButton_Click(
             object sender,
@@ -115,147 +160,340 @@ namespace InventoryManagementSystem.Views
             AddMovement("Stock Out");
         }
 
+        // =====================================
+        // ADD STOCK MOVEMENT
+        // =====================================
+
         private void AddMovement(string movementType)
         {
-            Window dialog = new Window
+            try
             {
-                Title = movementType,
-                Width = 420,
-                Height = 430,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = Window.GetWindow(this),
-                ResizeMode = ResizeMode.NoResize,
-                Background = System.Windows.Media.Brushes.White
-            };
+                // Load real products from SQL Server
+                var availableProducts =
+                    productService.GetAllProducts();
 
-            StackPanel panel = new StackPanel
-            {
-                Margin = new Thickness(25)
-            };
-
-            TextBlock heading = new TextBlock
-            {
-                Text = movementType,
-                FontSize = 23,
-                FontWeight = FontWeights.Bold,
-                Foreground = System.Windows.Media.Brushes.DarkSlateGray,
-                Margin = new Thickness(0, 0, 0, 20)
-            };
-
-            panel.Children.Add(heading);
-
-            TextBox productBox = CreateInput();
-            AddField(panel, "PRODUCT NAME", productBox);
-
-            TextBox quantityBox = CreateInput();
-            quantityBox.Text = "1";
-            AddField(panel, "QUANTITY", quantityBox);
-
-            TextBox noteBox = CreateInput();
-            AddField(panel, "NOTE", noteBox);
-
-            TextBlock errorText = new TextBlock
-            {
-                Foreground = System.Windows.Media.Brushes.IndianRed,
-                FontSize = 11,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-
-            panel.Children.Add(errorText);
-
-            StackPanel buttons = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right
-            };
-
-            Button cancelButton = new Button
-            {
-                Content = "Cancel",
-                Width = 90,
-                Height = 38,
-                Margin = new Thickness(0, 0, 10, 0)
-            };
-
-            cancelButton.Click += (s, e) =>
-            {
-                dialog.DialogResult = false;
-            };
-
-            Button saveButton = new Button
-            {
-                Content = "Save Movement",
-                Width = 125,
-                Height = 38,
-                Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(65, 105, 225)),
-                Foreground = System.Windows.Media.Brushes.White,
-                BorderThickness = new Thickness(0),
-                FontWeight = FontWeights.SemiBold
-            };
-
-            saveButton.Click += (s, e) =>
-            {
-                string productName = productBox.Text.Trim();
-
-                if (string.IsNullOrWhiteSpace(productName))
+                if (availableProducts.Count == 0)
                 {
-                    errorText.Text = "Please enter a product name.";
+                    ShowMessage(
+                        "No Products",
+                        "Please add a product before recording a stock movement.");
+
                     return;
                 }
 
-                if (!int.TryParse(quantityBox.Text, out int quantity) ||
-                    quantity <= 0)
-                {
-                    errorText.Text = "Quantity must be greater than zero.";
-                    return;
-                }
+                Window? owner = Window.GetWindow(this);
 
-                dialog.Tag = new StockMovement
+                Window dialog = new Window
                 {
-                    MovementId = movements.Count == 0
-                        ? 1
-                        : movements.Max(m => m.MovementId) + 1,
+                    Title = movementType,
+                    Width = 440,
+                    Height = 490,
 
-                    ProductName = productName,
-                    MovementType = movementType,
-                    Quantity = quantity,
-                    MovementDate = DateTime.Now,
-                    Note = noteBox.Text.Trim()
+                    WindowStartupLocation = owner == null
+                        ? WindowStartupLocation.CenterScreen
+                        : WindowStartupLocation.CenterOwner,
+
+                    ResizeMode = ResizeMode.NoResize,
+
+                    Background = Brushes.White,
+
+                    ShowInTaskbar = false
                 };
 
-                dialog.DialogResult = true;
-            };
+                if (owner != null)
+                    dialog.Owner = owner;
 
-            buttons.Children.Add(cancelButton);
-            buttons.Children.Add(saveButton);
+                StackPanel panel = new StackPanel
+                {
+                    Margin = new Thickness(25)
+                };
 
-            panel.Children.Add(buttons);
+                // HEADER
 
-            dialog.Content = panel;
+                TextBlock heading = new TextBlock
+                {
+                    Text = movementType,
+                    FontSize = 23,
+                    FontWeight = FontWeights.Bold,
 
-            if (dialog.ShowDialog() == true &&
-                dialog.Tag is StockMovement movement)
+                    Foreground = new SolidColorBrush(
+                        Color.FromRgb(25, 40, 63)),
+
+                    Margin = new Thickness(0, 0, 0, 8)
+                };
+
+                panel.Children.Add(heading);
+
+                TextBlock subtitle = new TextBlock
+                {
+                    Text = movementType == "Stock In"
+                        ? "Record incoming inventory."
+                        : "Record outgoing inventory.",
+
+                    FontSize = 12,
+                    Foreground = Brushes.SlateGray,
+
+                    Margin = new Thickness(0, 0, 0, 20)
+                };
+
+                panel.Children.Add(subtitle);
+
+                // PRODUCT SELECTION
+
+                ComboBox productBox = new ComboBox
+                {
+                    Height = 40,
+                    FontSize = 13,
+                    Padding = new Thickness(9),
+
+                    Margin = new Thickness(0, 0, 0, 14),
+
+                    ItemsSource = availableProducts,
+
+                    DisplayMemberPath = "Name",
+
+                    SelectedValuePath = "ProductId"
+                };
+
+                AddField(panel, "SELECT PRODUCT", productBox);
+
+                // CURRENT STOCK
+
+                TextBlock currentStockText = new TextBlock
+                {
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(
+                        Color.FromRgb(65, 105, 225)),
+
+                    FontWeight = FontWeights.SemiBold,
+
+                    Margin = new Thickness(0, 0, 0, 14)
+                };
+
+                panel.Children.Add(currentStockText);
+
+                productBox.SelectionChanged += (s, e) =>
+                {
+                    if (productBox.SelectedValue is int id)
+                    {
+                        var product = availableProducts
+                            .FirstOrDefault(p => p.ProductId == id);
+
+                        if (product != null)
+                        {
+                            currentStockText.Text =
+                                $"Current stock: {product.Quantity} units";
+                        }
+                    }
+                };
+
+                productBox.SelectedIndex = 0;
+
+                // QUANTITY
+
+                TextBox quantityBox = CreateInput();
+
+                quantityBox.Text = "1";
+
+                AddField(panel, "QUANTITY", quantityBox);
+
+                // NOTE
+
+                TextBox noteBox = CreateInput();
+
+                AddField(panel, "NOTE", noteBox);
+
+                // VALIDATION MESSAGE
+
+                TextBlock errorText = new TextBlock
+                {
+                    Foreground = Brushes.IndianRed,
+
+                    FontSize = 11,
+
+                    TextWrapping = TextWrapping.Wrap,
+
+                    Margin = new Thickness(0, 0, 0, 12)
+                };
+
+                panel.Children.Add(errorText);
+
+                // BUTTON CONTAINER
+
+                StackPanel buttons = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+
+                    HorizontalAlignment =
+                        HorizontalAlignment.Right
+                };
+
+                // CANCEL BUTTON
+
+                Button cancelButton = new Button
+                {
+                    Content = "Cancel",
+
+                    Width = 90,
+                    Height = 38,
+
+                    Margin = new Thickness(0, 0, 10, 0),
+
+                    IsCancel = true
+                };
+
+                cancelButton.Click += (s, e) =>
+                {
+                    dialog.DialogResult = false;
+                };
+
+                // SAVE BUTTON
+
+                Button saveButton = new Button
+                {
+                    Content = "Save Movement",
+
+                    Width = 135,
+                    Height = 38,
+
+                    Background = new SolidColorBrush(
+                        Color.FromRgb(65, 105, 225)),
+
+                    Foreground = Brushes.White,
+
+                    BorderThickness = new Thickness(0),
+
+                    FontWeight = FontWeights.SemiBold,
+
+                    IsDefault = true
+                };
+
+                saveButton.Click += (s, e) =>
+                {
+                    errorText.Text = "";
+
+                    // VALIDATE PRODUCT
+
+                    if (productBox.SelectedValue is not int productId)
+                    {
+                        errorText.Text =
+                            "Please select a product.";
+
+                        return;
+                    }
+
+                    // VALIDATE QUANTITY
+
+                    if (!int.TryParse(
+                        quantityBox.Text.Trim(),
+                        out int quantity) || quantity <= 0)
+                    {
+                        errorText.Text =
+                            "Quantity must be greater than zero.";
+
+                        return;
+                    }
+
+                    // SAVE TO SQL SERVER
+
+                    try
+                    {
+                        movementService.AddMovement(
+                            productId,
+                            movementType,
+                            quantity,
+                            noteBox.Text.Trim());
+
+                        dialog.DialogResult = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        errorText.Text = ex.Message;
+                    }
+                };
+
+                buttons.Children.Add(cancelButton);
+
+                buttons.Children.Add(saveButton);
+
+                panel.Children.Add(buttons);
+
+                // SCROLLABLE CONTENT
+
+                ScrollViewer scrollViewer = new ScrollViewer
+                {
+                    Content = panel,
+
+                    VerticalScrollBarVisibility =
+                        ScrollBarVisibility.Auto,
+
+                    HorizontalScrollBarVisibility =
+                        ScrollBarVisibility.Disabled
+                };
+
+                dialog.Content = scrollViewer;
+
+                // SHOW DIALOG
+
+                bool? result = dialog.ShowDialog();
+
+                if (result == true)
+                {
+                    // Refresh movement history
+                    LoadMovements();
+
+                    ShowMessage(
+                        "Success",
+                        "Stock movement saved successfully!");
+                }
+            }
+            catch (Exception ex)
             {
-                movements.Insert(0, movement);
-
-                movementsView?.Refresh();
-                UpdateStatistics();
+                ShowMessage(
+                    "Database Error",
+                    $"Error processing stock movement: {ex.Message}");
             }
         }
+
+        // =====================================
+        // ENGLISH MESSAGE DIALOG
+        // =====================================
+
+        private void ShowMessage(string title, string message)
+        {
+            EnglishDialog.Alert(
+                Window.GetWindow(this),
+                title,
+                message);
+        }
+
+        // =====================================
+        // TEXTBOX DESIGN
+        // =====================================
 
         private static TextBox CreateInput()
         {
             return new TextBox
             {
                 Height = 38,
+
                 FontSize = 12,
+
                 Padding = new Thickness(10, 7, 10, 7),
+
                 Margin = new Thickness(0, 0, 0, 14),
-                BorderBrush = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(225, 230, 239))
+
+                BorderBrush = new SolidColorBrush(
+                    Color.FromRgb(225, 230, 239)),
+
+                VerticalContentAlignment =
+                    VerticalAlignment.Center
             };
         }
+
+        // =====================================
+        // FORM FIELD DESIGN
+        // =====================================
 
         private static void AddField(
             Panel panel,
@@ -265,18 +503,27 @@ namespace InventoryManagementSystem.Views
             panel.Children.Add(new TextBlock
             {
                 Text = label,
+
                 FontSize = 10,
+
                 FontWeight = FontWeights.Bold,
-                Foreground = System.Windows.Media.Brushes.SlateGray,
+
+                Foreground = Brushes.SlateGray,
+
                 Margin = new Thickness(0, 0, 0, 7)
             });
 
             panel.Children.Add(input);
         }
 
+        // =====================================
+        // UPDATE STATISTICS
+        // =====================================
+
         private void UpdateStatistics()
         {
-            TotalMovementsText.Text = movements.Count.ToString();
+            TotalMovementsText.Text =
+                movements.Count.ToString();
 
             StockInText.Text = movements
                 .Where(m => m.MovementType == "Stock In")
@@ -289,6 +536,10 @@ namespace InventoryManagementSystem.Views
                 .ToString();
         }
     }
+
+    // =====================================
+    // UI STOCK MOVEMENT MODEL
+    // =====================================
 
     public class StockMovement
     {

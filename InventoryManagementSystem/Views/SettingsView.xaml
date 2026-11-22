@@ -138,6 +138,7 @@
                                 <ComboBoxItem Content="EUR (€)"/>
                                 <ComboBoxItem Content="HUF (Ft)"/>
                                 <ComboBoxItem Content="AZN (₼)"/>
+                                <ComboBoxItem Content="TRY (₺)"/>
                             </ComboBox>
                         </StackPanel>
                     </Grid>
@@ -150,6 +151,7 @@
                             <ComboBoxItem Content="English"/>
                             <ComboBoxItem Content="Azerbaijani"/>
                             <ComboBoxItem Content="Hungarian"/>
+                            <ComboBoxItem Content="Turkish"/>
                         </ComboBox>
                     </StackPanel>
                 </StackPanel>

@@ -8,180 +8,285 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
+using InventoryManagementSystem.Dialogs;
+using InventoryManagementSystem.Services;
 
 namespace InventoryManagementSystem.Views
 {
     public partial class ReportsView : UserControl
     {
-        private readonly ObservableCollection<InventoryReportItem> products = new();
+        private readonly ObservableCollection<InventoryReportItem>
+            products = new();
+
+        private readonly ProductService productService = new();
+
+        private readonly StockMovementService
+            movementService = new();
 
         public ReportsView()
         {
             InitializeComponent();
 
-            LoadSampleData();
-            RefreshReports();
+            InventoryDataGrid.ItemsSource = products;
+
+            // Refresh reports whenever the page opens
+            IsVisibleChanged += (sender, e) =>
+            {
+                if (e.NewValue is bool visible && visible)
+                {
+                    TryLoadReports();
+                }
+            };
+
+            Loaded += (sender, e) =>
+            {
+                if (IsVisible)
+                {
+                    TryLoadReports();
+                }
+            };
         }
 
-        private void LoadSampleData()
+        // =====================================
+        // LOAD REAL DATA FROM SQL SERVER
+        // =====================================
+
+        private void TryLoadReports()
         {
-            products.Add(new InventoryReportItem
+            try
             {
-                ProductName = "Wireless Mouse",
-                Category = "Electronics",
-                Quantity = 45,
-                UnitPrice = 25.00
-            });
-
-            products.Add(new InventoryReportItem
-            {
-                ProductName = "Office Chair",
-                Category = "Furniture",
-                Quantity = 12,
-                UnitPrice = 120.00
-            });
-
-            products.Add(new InventoryReportItem
-            {
-                ProductName = "USB Keyboard",
-                Category = "Electronics",
-                Quantity = 3,
-                UnitPrice = 40.00
-            });
-
-            products.Add(new InventoryReportItem
-            {
-                ProductName = "Monitor",
-                Category = "Electronics",
-                Quantity = 20,
-                UnitPrice = 180.00
-            });
-
-            products.Add(new InventoryReportItem
-            {
-                ProductName = "Desk Lamp",
-                Category = "Accessories",
-                Quantity = 2,
-                UnitPrice = 35.00
-            });
-
-            products.Add(new InventoryReportItem
-            {
-                ProductName = "Laptop Stand",
-                Category = "Accessories",
-                Quantity = 15,
-                UnitPrice = 29.99
-            });
-
-            products.Add(new InventoryReportItem
-            {
-                ProductName = "Mechanical Keyboard",
-                Category = "Electronics",
-                Quantity = 8,
-                UnitPrice = 89.99
-            });
-        }
-
-        private void RefreshReports()
-        {
-            foreach (InventoryReportItem product in products)
-            {
-                product.Status = product.Quantity <= 10
-                    ? "Low Stock"
-                    : "In Stock";
+                LoadReports();
             }
+            catch (Exception ex)
+            {
+                ShowMessage(
+                    "Database Error",
+                    "Could not load reports:\n" + ex.Message);
+            }
+        }
+
+        private void LoadReports()
+        {
+            // Get products from SQL Server
+            var databaseProducts =
+                productService.GetAllProducts();
+
+            // Get stock movements from SQL Server
+            var databaseMovements =
+                movementService.GetAllMovements();
+
+            products.Clear();
+
+            foreach (var product in databaseProducts)
+            {
+                products.Add(new InventoryReportItem
+                {
+                    ProductName = product.Name,
+
+                    Category =
+                        product.Category?.Name ?? "Uncategorized",
+
+                    Quantity = product.Quantity,
+
+                    UnitPrice = product.Price,
+
+                    Status = product.Quantity <= 10
+                        ? "Low Stock"
+                        : "In Stock"
+                });
+            }
+
+            // =====================================
+            // INVENTORY SUMMARY
+            // =====================================
 
             InventoryDataGrid.ItemsSource = products;
 
-            LowStockDataGrid.ItemsSource =
-                products.Where(p => p.Quantity <= 10).ToList();
+            TotalProductsText.Text =
+                products.Count.ToString();
 
-            TotalProductsText.Text = products.Count.ToString();
+            long totalStock =
+                products.Sum(p => (long)p.Quantity);
 
             TotalStockText.Text =
-                products.Sum(p => p.Quantity).ToString();
+                totalStock.ToString();
 
-            double totalValue =
-                products.Sum(p => p.Quantity * p.UnitPrice);
+            decimal totalValue =
+                products.Sum(p => p.TotalValue);
 
             StockValueText.Text =
-                totalValue.ToString("C2", CultureInfo.GetCultureInfo("en-US"));
+                totalValue.ToString(
+                    "C2",
+                    CultureInfo.GetCultureInfo("en-US"));
+
+            // =====================================
+            // LOW STOCK REPORT
+            // =====================================
+
+            var lowStockProducts = products
+                .Where(p => p.Quantity <= 10)
+                .ToList();
+
+            LowStockDataGrid.ItemsSource =
+                lowStockProducts;
 
             LowStockText.Text =
-                products.Count(p => p.Quantity <= 10).ToString();
+                lowStockProducts.Count.ToString();
 
-            // Sample movement totals.
-            StockInText.Text = "10";
-            StockOutText.Text = "2";
+            // =====================================
+            // STOCK MOVEMENT SUMMARY
+            // =====================================
+
+            long totalStockIn = databaseMovements
+                .Where(m => m.MovementType == "Stock In")
+                .Sum(m => (long)m.Quantity);
+
+            long totalStockOut = databaseMovements
+                .Where(m => m.MovementType == "Stock Out")
+                .Sum(m => (long)m.Quantity);
+
+            StockInText.Text =
+                totalStockIn.ToString();
+
+            StockOutText.Text =
+                totalStockOut.ToString();
         }
 
-        private void ExportButton_Click(object sender, RoutedEventArgs e)
+        // =====================================
+        // EXPORT CSV
+        // =====================================
+
+        private void ExportButton_Click(
+            object sender,
+            RoutedEventArgs e)
         {
-            SaveFileDialog dialog = new SaveFileDialog
-            {
-                Title = "Export Inventory Report",
-                FileName = "NEXORA_Inventory_Report.csv",
-                Filter = "CSV Files (*.csv)|*.csv",
-                DefaultExt = ".csv"
-            };
-
-            if (dialog.ShowDialog() != true)
-                return;
-
             try
             {
+                // Refresh before exporting
+                LoadReports();
+
+                SaveFileDialog dialog = new SaveFileDialog
+                {
+                    Title = "Export Inventory Report",
+
+                    FileName = "NEXORA_Inventory_Report.csv",
+
+                    Filter = "CSV Files (*.csv)|*.csv",
+
+                    DefaultExt = ".csv",
+
+                    AddExtension = true,
+
+                    OverwritePrompt = true
+                };
+
+                if (dialog.ShowDialog() != true)
+                {
+                    return;
+                }
+
                 StringBuilder csv = new StringBuilder();
 
+                // CSV COLUMN HEADERS
                 csv.AppendLine(
                     "Product,Category,Quantity,Unit Price,Total Value,Status");
 
-                foreach (InventoryReportItem product in products)
+                // REAL DATABASE PRODUCTS
+                foreach (var product in products)
                 {
                     csv.AppendLine(string.Join(",",
                         EscapeCsv(product.ProductName),
+
                         EscapeCsv(product.Category),
-                        product.Quantity.ToString(),
+
+                        product.Quantity.ToString(
+                            CultureInfo.InvariantCulture),
+
                         product.UnitPrice.ToString(
-                            "F2", CultureInfo.InvariantCulture),
+                            "F2",
+                            CultureInfo.InvariantCulture),
+
                         product.TotalValue.ToString(
-                            "F2", CultureInfo.InvariantCulture),
-                        EscapeCsv(product.Status)));
+                            "F2",
+                            CultureInfo.InvariantCulture),
+
+                        EscapeCsv(product.Status)
+                    ));
                 }
 
+                // Save as UTF-8 for Excel compatibility
                 File.WriteAllText(
                     dialog.FileName,
                     csv.ToString(),
                     new UTF8Encoding(true));
 
-                MessageBox.Show(
-                    "Inventory report exported successfully!",
+                ShowMessage(
                     "Export Complete",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Inventory report exported successfully!");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    "Could not export the report.\n" + ex.Message,
+                ShowMessage(
                     "Export Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Could not export the report:\n" +
+                    ex.Message);
             }
         }
 
-        private string EscapeCsv(string value)
+        // =====================================
+        // CSV TEXT ESCAPING
+        // =====================================
+
+        private static string EscapeCsv(string value)
         {
-            return "\"" + value.Replace("\"", "\"\"") + "\"";
+            string text = value ?? "";
+
+            // Prevent spreadsheet formula interpretation
+            string trimmed = text.TrimStart();
+
+            if (trimmed.Length > 0 &&
+                "=+-@".Contains(trimmed[0]))
+            {
+                text = "'" + text;
+            }
+
+            return "\"" +
+                text.Replace("\"", "\"\"") +
+                "\"";
+        }
+
+        // =====================================
+        // ENGLISH MESSAGE WINDOW
+        // =====================================
+
+        private void ShowMessage(
+            string title,
+            string message)
+        {
+            EnglishDialog.Alert(
+                Window.GetWindow(this),
+                title,
+                message);
         }
     }
+
+    // =====================================
+    // REPORT DISPLAY MODEL
+    // =====================================
 
     public class InventoryReportItem
     {
         public string ProductName { get; set; } = "";
+
         public string Category { get; set; } = "";
+
         public int Quantity { get; set; }
-        public double UnitPrice { get; set; }
-        public double TotalValue => Quantity * UnitPrice;
+
+        public decimal UnitPrice { get; set; }
+
+        public decimal TotalValue =>
+            Quantity * UnitPrice;
+
         public string Status { get; set; } = "";
     }
 }

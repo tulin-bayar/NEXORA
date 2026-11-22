@@ -6,93 +6,123 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using InventoryManagementSystem.Dialogs;
+using InventoryManagementSystem.Services;
 
 namespace InventoryManagementSystem.Views
 {
     public partial class SuppliersView : UserControl
     {
         private readonly ObservableCollection<Supplier> suppliers = new();
-        private ICollectionView suppliersView;
+
+        private ICollectionView? suppliersView;
+
         private Supplier? selectedSupplier;
-        private int nextSupplierId = 1;
+
+        private readonly SupplierService supplierService = new();
 
         public SuppliersView()
         {
             InitializeComponent();
 
-            suppliersView = CollectionViewSource.GetDefaultView(suppliers);
+            suppliersView =
+                CollectionViewSource.GetDefaultView(suppliers);
+
             suppliersView.Filter = FilterSuppliers;
 
             SuppliersDataGrid.ItemsSource = suppliersView;
 
-            LoadSampleSuppliers();
-            UpdateStatistics();
             ClearForm();
+
+            try
+            {
+                LoadSuppliers();
+            }
+            catch (Exception ex)
+            {
+                ShowMessage("Database Error", ex.Message);
+            }
+
+            // Refresh when returning to Suppliers page
+            IsVisibleChanged += (sender, e) =>
+            {
+                if (e.NewValue is bool visible && visible)
+                {
+                    try
+                    {
+                        LoadSuppliers();
+                        ClearForm();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Database Error", ex.Message);
+                    }
+                }
+            };
         }
 
-        private void LoadSampleSuppliers()
+        // =====================================
+        // READ - LOAD SUPPLIERS FROM SQL SERVER
+        // =====================================
+
+        private void LoadSuppliers()
         {
-            suppliers.Add(new Supplier
-            {
-                SupplierId = nextSupplierId++,
-                CompanyName = "TechWorld Solutions",
-                ContactPerson = "James Wilson",
-                Phone = "+1 202 555 0145",
-                Email = "contact@techworld.com",
-                Address = "New York, USA",
-                Status = "Active"
-            });
+            var databaseSuppliers =
+                supplierService.GetAllSuppliers();
 
-            suppliers.Add(new Supplier
-            {
-                SupplierId = nextSupplierId++,
-                CompanyName = "Global Furniture",
-                ContactPerson = "Emily Brown",
-                Phone = "+1 202 555 0182",
-                Email = "info@globalfurniture.com",
-                Address = "Chicago, USA",
-                Status = "Active"
-            });
+            suppliers.Clear();
 
-            suppliers.Add(new Supplier
+            foreach (var supplier in databaseSuppliers)
             {
-                SupplierId = nextSupplierId++,
-                CompanyName = "Smart Accessories",
-                ContactPerson = "Michael Davis",
-                Phone = "+1 202 555 0193",
-                Email = "sales@smartaccessories.com",
-                Address = "Boston, USA",
-                Status = "Inactive"
-            });
+                suppliers.Add(new Supplier
+                {
+                    SupplierId = supplier.SupplierId,
+                    CompanyName = supplier.CompanyName,
+                    ContactPerson = supplier.ContactPerson,
+                    Phone = supplier.Phone,
+                    Email = supplier.Email,
+                    Address = supplier.Address,
+                    Status = supplier.Status
+                });
+            }
 
-            suppliers.Add(new Supplier
-            {
-                SupplierId = nextSupplierId++,
-                CompanyName = "Digital Systems",
-                ContactPerson = "Sophia Miller",
-                Phone = "+1 202 555 0167",
-                Email = "support@digitalsystems.com",
-                Address = "Los Angeles, USA",
-                Status = "Active"
-            });
+            suppliersView?.Refresh();
+
+            UpdateStatistics();
         }
+
+        // =====================================
+        // SEARCH AND STATUS FILTER
+        // =====================================
 
         private bool FilterSuppliers(object item)
         {
             if (item is not Supplier supplier)
                 return false;
 
-            string searchText = SearchBox?.Text?.Trim() ?? "";
+            string searchText =
+                SearchBox?.Text?.Trim() ?? "";
 
             bool matchesSearch =
-                supplier.CompanyName.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                supplier.ContactPerson.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                supplier.Email.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                supplier.Phone.Contains(searchText, StringComparison.OrdinalIgnoreCase);
+                supplier.CompanyName.Contains(
+                    searchText,
+                    StringComparison.OrdinalIgnoreCase) ||
+
+                supplier.ContactPerson.Contains(
+                    searchText,
+                    StringComparison.OrdinalIgnoreCase) ||
+
+                supplier.Email.Contains(
+                    searchText,
+                    StringComparison.OrdinalIgnoreCase) ||
+
+                supplier.Phone.Contains(
+                    searchText,
+                    StringComparison.OrdinalIgnoreCase);
 
             string selectedStatus =
-                (StatusFilter?.SelectedItem as ComboBoxItem)?.Content?.ToString()
-                ?? "All Suppliers";
+                (StatusFilter?.SelectedItem as ComboBoxItem)
+                ?.Content?.ToString() ?? "All Suppliers";
 
             bool matchesStatus =
                 selectedStatus == "All Suppliers" ||
@@ -101,151 +131,264 @@ namespace InventoryManagementSystem.Views
             return matchesSearch && matchesStatus;
         }
 
-        private void AddSupplierButton_Click(object sender, RoutedEventArgs e)
+        private void SearchBox_TextChanged(
+            object sender,
+            TextChangedEventArgs e)
+        {
+            suppliersView?.Refresh();
+        }
+
+        private void StatusFilter_SelectionChanged(
+            object sender,
+            SelectionChangedEventArgs e)
+        {
+            suppliersView?.Refresh();
+        }
+
+        // =====================================
+        // ADD SUPPLIER BUTTON
+        // =====================================
+
+        private void AddSupplierButton_Click(
+            object sender,
+            RoutedEventArgs e)
         {
             ClearForm();
             CompanyNameBox.Focus();
         }
 
-        private void SaveSupplierButton_Click(object sender, RoutedEventArgs e)
+        // =====================================
+        // CREATE / UPDATE SUPPLIER
+        // =====================================
+
+        private void SaveSupplierButton_Click(
+            object sender,
+            RoutedEventArgs e)
         {
-            string companyName = CompanyNameBox.Text.Trim();
-            string contactPerson = ContactPersonBox.Text.Trim();
-            string phone = PhoneBox.Text.Trim();
-            string email = EmailBox.Text.Trim();
-            string address = AddressBox.Text.Trim();
+            string companyName =
+                CompanyNameBox.Text.Trim();
+
+            string contactPerson =
+                ContactPersonBox.Text.Trim();
+
+            string phone =
+                PhoneBox.Text.Trim();
+
+            string email =
+                EmailBox.Text.Trim();
+
+            string address =
+                AddressBox.Text.Trim();
 
             string status =
-                (StatusBox.SelectedItem as ComboBoxItem)?.Content?.ToString()
-                ?? "Active";
+                (StatusBox.SelectedItem as ComboBoxItem)
+                ?.Content?.ToString() ?? "Active";
+
+            // BASIC VALIDATION
 
             if (string.IsNullOrWhiteSpace(companyName))
             {
-                MessageBox.Show(
-                    "Please enter the company name.",
+                ShowMessage(
                     "Validation",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Please enter the company name.");
 
                 CompanyNameBox.Focus();
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(contactPerson) ||
-                string.IsNullOrWhiteSpace(phone) ||
-                string.IsNullOrWhiteSpace(email))
+            if (string.IsNullOrWhiteSpace(contactPerson))
             {
-                MessageBox.Show(
-                    "Please complete the contact person, phone and email fields.",
+                ShowMessage(
                     "Validation",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Please enter the contact person.");
 
+                ContactPersonBox.Focus();
                 return;
             }
 
-            if (!email.Contains('@') || !email.Contains('.'))
+            if (string.IsNullOrWhiteSpace(phone))
             {
-                MessageBox.Show(
-                    "Please enter a valid email address.",
-                    "Invalid Email",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                ShowMessage(
+                    "Validation",
+                    "Please enter the phone number.");
+
+                PhoneBox.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ShowMessage(
+                    "Validation",
+                    "Please enter the email address.");
 
                 EmailBox.Focus();
                 return;
             }
 
-            if (selectedSupplier == null)
+            try
             {
-                Supplier newSupplier = new Supplier
+                if (selectedSupplier == null)
                 {
-                    SupplierId = nextSupplierId++,
-                    CompanyName = companyName,
-                    ContactPerson = contactPerson,
-                    Phone = phone,
-                    Email = email,
-                    Address = address,
-                    Status = status
-                };
+                    // CREATE - SQL SERVER
 
-                suppliers.Add(newSupplier);
+                    supplierService.AddSupplier(
+                        companyName,
+                        contactPerson,
+                        phone,
+                        email,
+                        address,
+                        status);
+
+                    LoadSuppliers();
+                    ClearForm();
+
+                    ShowMessage(
+                        "Success",
+                        "Supplier added successfully!");
+                }
+                else
+                {
+                    // UPDATE - SQL SERVER
+
+                    supplierService.UpdateSupplier(
+                        selectedSupplier.SupplierId,
+                        companyName,
+                        contactPerson,
+                        phone,
+                        email,
+                        address,
+                        status);
+
+                    LoadSuppliers();
+                    ClearForm();
+
+                    ShowMessage(
+                        "Success",
+                        "Supplier updated successfully!");
+                }
             }
-            else
+            catch (ArgumentException ex)
             {
-                selectedSupplier.CompanyName = companyName;
-                selectedSupplier.ContactPerson = contactPerson;
-                selectedSupplier.Phone = phone;
-                selectedSupplier.Email = email;
-                selectedSupplier.Address = address;
-                selectedSupplier.Status = status;
+                ShowMessage(
+                    "Validation Error",
+                    ex.Message);
             }
-
-            suppliersView.Refresh();
-            UpdateStatistics();
-            ClearForm();
+            catch (Exception ex)
+            {
+                ShowMessage(
+                    "Database Error",
+                    $"Error saving supplier: {ex.Message}");
+            }
         }
 
-        private void EditSupplierButton_Click(object sender, RoutedEventArgs e)
+        // =====================================
+        // EDIT SUPPLIER
+        // =====================================
+
+        private void EditSupplierButton_Click(
+            object sender,
+            RoutedEventArgs e)
         {
             if (sender is not Button button ||
                 button.DataContext is not Supplier supplier)
+            {
                 return;
+            }
 
             selectedSupplier = supplier;
 
-            CompanyNameBox.Text = supplier.CompanyName;
-            ContactPersonBox.Text = supplier.ContactPerson;
-            PhoneBox.Text = supplier.Phone;
-            EmailBox.Text = supplier.Email;
-            AddressBox.Text = supplier.Address;
+            CompanyNameBox.Text =
+                supplier.CompanyName;
+
+            ContactPersonBox.Text =
+                supplier.ContactPerson;
+
+            PhoneBox.Text =
+                supplier.Phone;
+
+            EmailBox.Text =
+                supplier.Email;
+
+            AddressBox.Text =
+                supplier.Address;
 
             StatusBox.SelectedIndex =
                 supplier.Status == "Inactive" ? 1 : 0;
 
-            FormTitleText.Text = "Edit Supplier Information";
-            SaveSupplierButton.Content = "Update Supplier";
-            CancelEditButton.Visibility = Visibility.Visible;
+            FormTitleText.Text =
+                "Edit Supplier Information";
+
+            SaveSupplierButton.Content =
+                "Update Supplier";
+
+            CancelEditButton.Visibility =
+                Visibility.Visible;
         }
 
-        private void DeleteSupplierButton_Click(object sender, RoutedEventArgs e)
+        // =====================================
+        // DELETE SUPPLIER
+        // =====================================
+
+        private void DeleteSupplierButton_Click(
+            object sender,
+            RoutedEventArgs e)
         {
             if (sender is not Button button ||
                 button.DataContext is not Supplier supplier)
+            {
+                return;
+            }
+
+            bool confirmed = EnglishDialog.Confirm(
+                Window.GetWindow(this),
+                "Delete Supplier",
+                $"Are you sure you want to delete '{supplier.CompanyName}'?");
+
+            if (!confirmed)
                 return;
 
-            MessageBoxResult result = MessageBox.Show(
-                $"Are you sure you want to delete {supplier.CompanyName}?",
-                "Delete Supplier",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+            try
             {
-                suppliers.Remove(supplier);
+                // DELETE FROM SQL SERVER
 
-                if (selectedSupplier == supplier)
+                supplierService.DeleteSupplier(
+                    supplier.SupplierId);
+
+                if (selectedSupplier?.SupplierId ==
+                    supplier.SupplierId)
+                {
                     ClearForm();
+                }
 
-                suppliersView.Refresh();
-                UpdateStatistics();
+                LoadSuppliers();
+
+                ShowMessage(
+                    "Success",
+                    "Supplier deleted successfully!");
+            }
+            catch (Exception ex)
+            {
+                ShowMessage(
+                    "Database Error",
+                    $"Error deleting supplier: {ex.Message}");
             }
         }
 
-        private void CancelEditButton_Click(object sender, RoutedEventArgs e)
+        // =====================================
+        // CANCEL EDIT
+        // =====================================
+
+        private void CancelEditButton_Click(
+            object sender,
+            RoutedEventArgs e)
         {
             ClearForm();
         }
 
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            suppliersView?.Refresh();
-        }
-
-        private void StatusFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            suppliersView?.Refresh();
-        }
+        // =====================================
+        // CLEAR FORM
+        // =====================================
 
         private void ClearForm()
         {
@@ -259,22 +402,52 @@ namespace InventoryManagementSystem.Views
 
             StatusBox.SelectedIndex = 0;
 
-            FormTitleText.Text = "Supplier Information";
-            SaveSupplierButton.Content = "Save Supplier";
-            CancelEditButton.Visibility = Visibility.Collapsed;
+            FormTitleText.Text =
+                "Supplier Information";
+
+            SaveSupplierButton.Content =
+                "Save Supplier";
+
+            CancelEditButton.Visibility =
+                Visibility.Collapsed;
         }
+
+        // =====================================
+        // UPDATE STATISTICS
+        // =====================================
 
         private void UpdateStatistics()
         {
-            TotalSuppliersText.Text = suppliers.Count.ToString();
+            TotalSuppliersText.Text =
+                suppliers.Count.ToString();
 
             ActiveSuppliersText.Text =
-                suppliers.Count(s => s.Status == "Active").ToString();
+                suppliers.Count(s =>
+                    s.Status == "Active").ToString();
 
             InactiveSuppliersText.Text =
-                suppliers.Count(s => s.Status == "Inactive").ToString();
+                suppliers.Count(s =>
+                    s.Status == "Inactive").ToString();
+        }
+
+        // =====================================
+        // ENGLISH MESSAGE DIALOG
+        // =====================================
+
+        private void ShowMessage(
+            string title,
+            string message)
+        {
+            EnglishDialog.Alert(
+                Window.GetWindow(this),
+                title,
+                message);
         }
     }
+
+    // =====================================
+    // UI MODEL - SUPPLIER
+    // =====================================
 
     public class Supplier : INotifyPropertyChanged
     {
@@ -290,40 +463,65 @@ namespace InventoryManagementSystem.Views
         public string CompanyName
         {
             get => companyName;
-            set { companyName = value; OnPropertyChanged(nameof(CompanyName)); }
+            set
+            {
+                companyName = value;
+                OnPropertyChanged(nameof(CompanyName));
+            }
         }
 
         public string ContactPerson
         {
             get => contactPerson;
-            set { contactPerson = value; OnPropertyChanged(nameof(ContactPerson)); }
+            set
+            {
+                contactPerson = value;
+                OnPropertyChanged(nameof(ContactPerson));
+            }
         }
 
         public string Phone
         {
             get => phone;
-            set { phone = value; OnPropertyChanged(nameof(Phone)); }
+            set
+            {
+                phone = value;
+                OnPropertyChanged(nameof(Phone));
+            }
         }
 
         public string Email
         {
             get => email;
-            set { email = value; OnPropertyChanged(nameof(Email)); }
+            set
+            {
+                email = value;
+                OnPropertyChanged(nameof(Email));
+            }
         }
 
         public string Address
         {
             get => address;
-            set { address = value; OnPropertyChanged(nameof(Address)); }
+            set
+            {
+                address = value;
+                OnPropertyChanged(nameof(Address));
+            }
         }
 
         public string Status
         {
             get => status;
-            set { status = value; OnPropertyChanged(nameof(Status)); }
+            set
+            {
+                status = value;
+                OnPropertyChanged(nameof(Status));
+            }
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
+        public event PropertyChangedEventHandler?
+            PropertyChanged;
 
         private void OnPropertyChanged(string propertyName)
         {

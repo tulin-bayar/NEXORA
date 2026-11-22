@@ -34,10 +34,12 @@
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR -->
-        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
+        <Border Grid.Column="0"
+                Background="{StaticResource SidebarBrush}">
             <DockPanel>
 
-                <StackPanel DockPanel.Dock="Top" Margin="25,30,25,35">
+                <StackPanel DockPanel.Dock="Top"
+                            Margin="25,30,25,35">
                     <TextBlock Text="NEXORA"
                                Foreground="White"
                                FontSize="27"
@@ -48,8 +50,10 @@
                                Margin="2,5,0,0"/>
                 </StackPanel>
 
-                <StackPanel DockPanel.Dock="Bottom" Margin="25,0,25,25">
-                    <Separator Background="#34465E" Margin="0,0,0,17"/>
+                <StackPanel DockPanel.Dock="Bottom"
+                            Margin="25,0,25,25">
+                    <Separator Background="#34465E"
+                               Margin="0,0,0,17"/>
                     <TextBlock Text="NEXORA Inventory"
                                Foreground="White"
                                FontSize="12"
@@ -121,17 +125,19 @@
             </DockPanel>
         </Border>
 
-        <!-- CONTENT -->
+        <!-- MAIN CONTENT -->
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="75"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
+            <!-- TOP BAR -->
             <Border Grid.Row="0"
                     Background="White"
                     BorderBrush="#E5EAF0"
                     BorderThickness="0,0,0,1">
+
                 <Grid Margin="30,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -160,10 +166,14 @@
                 </Grid>
             </Border>
 
+            <!-- PAGE CONTAINER -->
             <Grid Grid.Row="1">
 
+                <!-- DASHBOARD -->
                 <ScrollViewer x:Name="DashboardView"
-                              VerticalScrollBarVisibility="Auto">
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+
                     <StackPanel Margin="30">
 
                         <TextBlock Text="Welcome back, Administrator"
@@ -176,43 +186,87 @@
                                    Foreground="#8793A3"
                                    Margin="0,7,0,25"/>
 
-                        <UniformGrid Columns="4" Margin="0,0,0,25">
+                        <!-- REAL DATABASE STATISTICS -->
+                        <UniformGrid Columns="4"
+                                     Margin="0,0,0,25">
 
-                            <Border Background="White" CornerRadius="10" Padding="20" Margin="0,0,10,0">
+                            <Border Background="White"
+                                    CornerRadius="10"
+                                    Padding="20"
+                                    Margin="0,0,10,0">
                                 <StackPanel>
-                                    <TextBlock Text="TOTAL PRODUCTS" Foreground="#8793A3" FontSize="10"/>
-                                    <TextBlock Text="7" Foreground="#24364B" FontSize="29" FontWeight="Bold" Margin="0,10,0,0"/>
+                                    <TextBlock Text="TOTAL PRODUCTS"
+                                               Foreground="#8793A3"
+                                               FontSize="10"/>
+                                    <TextBlock x:Name="DashboardTotalProductsText"
+                                               Text="0"
+                                               Foreground="#24364B"
+                                               FontSize="29"
+                                               FontWeight="Bold"
+                                               Margin="0,10,0,0"/>
                                 </StackPanel>
                             </Border>
 
-                            <Border Background="White" CornerRadius="10" Padding="20" Margin="4,0,8,0">
+                            <Border Background="White"
+                                    CornerRadius="10"
+                                    Padding="20"
+                                    Margin="4,0,8,0">
                                 <StackPanel>
-                                    <TextBlock Text="TOTAL STOCK" Foreground="#8793A3" FontSize="10"/>
-                                    <TextBlock Text="105" Foreground="#24364B" FontSize="29" FontWeight="Bold" Margin="0,10,0,0"/>
+                                    <TextBlock Text="TOTAL STOCK"
+                                               Foreground="#8793A3"
+                                               FontSize="10"/>
+                                    <TextBlock x:Name="DashboardTotalStockText"
+                                               Text="0"
+                                               Foreground="#24364B"
+                                               FontSize="29"
+                                               FontWeight="Bold"
+                                               Margin="0,10,0,0"/>
                                 </StackPanel>
                             </Border>
 
-                            <Border Background="White" CornerRadius="10" Padding="20" Margin="8,0,4,0">
+                            <Border Background="White"
+                                    CornerRadius="10"
+                                    Padding="20"
+                                    Margin="8,0,4,0">
                                 <StackPanel>
-                                    <TextBlock Text="LOW STOCK" Foreground="#8793A3" FontSize="10"/>
-                                    <TextBlock Text="3" Foreground="#D58B36" FontSize="29" FontWeight="Bold" Margin="0,10,0,0"/>
+                                    <TextBlock Text="LOW STOCK"
+                                               Foreground="#8793A3"
+                                               FontSize="10"/>
+                                    <TextBlock x:Name="DashboardLowStockText"
+                                               Text="0"
+                                               Foreground="#D58B36"
+                                               FontSize="29"
+                                               FontWeight="Bold"
+                                               Margin="0,10,0,0"/>
                                 </StackPanel>
                             </Border>
 
-                            <Border Background="White" CornerRadius="10" Padding="20" Margin="12,0,0,0">
+                            <Border Background="White"
+                                    CornerRadius="10"
+                                    Padding="20"
+                                    Margin="12,0,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="SUPPLIERS" Foreground="#8793A3" FontSize="10"/>
-                                    <TextBlock Text="4" Foreground="#24364B" FontSize="29" FontWeight="Bold" Margin="0,10,0,0"/>
+                                    <TextBlock Text="SUPPLIERS"
+                                               Foreground="#8793A3"
+                                               FontSize="10"/>
+                                    <TextBlock x:Name="DashboardSuppliersText"
+                                               Text="0"
+                                               Foreground="#24364B"
+                                               FontSize="29"
+                                               FontWeight="Bold"
+                                               Margin="0,10,0,0"/>
                                 </StackPanel>
                             </Border>
 
                         </UniformGrid>
 
+                        <!-- QUICK ACTIONS -->
                         <Border Background="White"
                                 CornerRadius="12"
                                 Padding="22"
                                 Margin="0,0,0,22">
                             <StackPanel>
+
                                 <TextBlock Text="Inventory Overview"
                                            FontSize="17"
                                            FontWeight="SemiBold"
@@ -224,6 +278,7 @@
                                            Margin="0,7,0,20"/>
 
                                 <WrapPanel>
+
                                     <Button Content="View Products"
                                             Click="ProductsButton_Click"
                                             Background="#315B86"
@@ -246,53 +301,88 @@
                                             Foreground="#315B86"
                                             Padding="18,11"
                                             BorderThickness="0"/>
+
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
 
-                        <Border Background="White" CornerRadius="12" Padding="22">
+                        <!-- REAL RECENT ACTIVITY -->
+                        <Border Background="White"
+                                CornerRadius="12"
+                                Padding="22">
                             <StackPanel>
+
                                 <TextBlock Text="Recent Activity"
                                            FontSize="17"
                                            FontWeight="SemiBold"
                                            Foreground="#24364B"
                                            Margin="0,0,0,15"/>
 
-                                <TextBlock Text="Wireless Mouse — Stock In: 10 units"
-                                           Foreground="#536477"
-                                           FontSize="12"
-                                           Margin="0,8"/>
+                                <ItemsControl x:Name="RecentActivitiesList">
 
-                                <Separator/>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
 
-                                <TextBlock Text="USB Keyboard — Stock Out: 2 units"
-                                           Foreground="#536477"
-                                           FontSize="12"
-                                           Margin="0,8"/>
+                                                <Grid Margin="0,10">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
 
-                                <Separator/>
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding Description}"
+                                                               TextWrapping="Wrap"
+                                                               Foreground="#536477"
+                                                               FontSize="12"
+                                                               Margin="0,0,15,0"/>
 
-                                <TextBlock Text="Office Chair — Stock In: 5 units"
-                                           Foreground="#536477"
-                                           FontSize="12"
-                                           Margin="0,8"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding DateLabel}"
+                                                               Foreground="#8793A3"
+                                                               FontSize="11"
+                                                               VerticalAlignment="Center"/>
+
+                                                </Grid>
+
+                                                <Separator Background="#E8ECF2"/>
+
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+
+                                </ItemsControl>
+
                             </StackPanel>
                         </Border>
 
                     </StackPanel>
                 </ScrollViewer>
 
-                <views:ProductsView x:Name="ProductsPage" Visibility="Collapsed"/>
+                <!-- OTHER PAGES -->
+                <views:ProductsView
+                    x:Name="ProductsPage"
+                    Visibility="Collapsed"/>
 
-                <views:CategoriesView x:Name="CategoriesPage" Visibility="Collapsed"/>
+                <views:CategoriesView
+                    x:Name="CategoriesPage"
+                    Visibility="Collapsed"/>
 
-                <views:StockMovementsView x:Name="StockMovementsPage" Visibility="Collapsed"/>
+                <views:StockMovementsView
+                    x:Name="StockMovementsPage"
+                    Visibility="Collapsed"/>
 
-                <views:SuppliersView x:Name="SuppliersPage" Visibility="Collapsed"/>
+                <views:SuppliersView
+                    x:Name="SuppliersPage"
+                    Visibility="Collapsed"/>
 
-                <views:ReportsView x:Name="ReportsPage" Visibility="Collapsed"/>
+                <views:ReportsView
+                    x:Name="ReportsPage"
+                    Visibility="Collapsed"/>
 
-                <views:SettingsView x:Name="SettingsPage" Visibility="Collapsed"/>
+                <views:SettingsView
+                    x:Name="SettingsPage"
+                    Visibility="Collapsed"/>
 
             </Grid>
         </Grid>

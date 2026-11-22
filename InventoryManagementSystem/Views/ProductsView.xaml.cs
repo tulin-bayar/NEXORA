@@ -1,6 +1,5 @@
 ﻿
 using System;
-using InventoryManagementSystem.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -9,6 +8,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using InventoryManagementSystem.Dialogs;
+using InventoryManagementSystem.Services;
 
 namespace InventoryManagementSystem.Views
 {
@@ -16,24 +17,68 @@ namespace InventoryManagementSystem.Views
     {
         private readonly ObservableCollection<Product> products = new();
         private ICollectionView? productsView;
+
         private readonly ProductService productService = new();
         private readonly CategoryService categoryService = new();
 
         public ProductsView()
         {
             InitializeComponent();
+
+            LoadCategoryFilter();
             LoadProducts();
+
+            IsVisibleChanged += (sender, e) =>
+            {
+                if (e.NewValue is bool visible && visible)
+                {
+                    try
+                    {
+                        LoadCategoryFilter();
+                        LoadProducts();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Database Error", ex.Message);
+                    }
+                }
+            };
         }
 
-        // LOAD PRODUCTS
+        // ======================================
+        // LOAD CATEGORIES FROM SQL SERVER
+        // ======================================
 
+        private void LoadCategoryFilter()
+        {
+            CategoryComboBox.Items.Clear();
+
+            CategoryComboBox.Items.Add(new ComboBoxItem
+            {
+                Content = "All Categories"
+            });
+
+            var categories = categoryService.GetAllCategories();
+
+            foreach (var category in categories)
+            {
+                CategoryComboBox.Items.Add(new ComboBoxItem
+                {
+                    Content = category.Name
+                });
+            }
+
+            CategoryComboBox.SelectedIndex = 0;
+        }
+
+        // ======================================
+        // LOAD PRODUCTS FROM SQL SERVER
+        // ======================================
 
         private void LoadProducts()
         {
-            // Clear existing items
             products.Clear();
 
-            // Read products from SQL Server
             var databaseProducts = productService.GetAllProducts();
 
             foreach (var product in databaseProducts)
@@ -42,25 +87,25 @@ namespace InventoryManagementSystem.Views
                 {
                     ProductId = product.ProductId,
                     Name = product.Name,
-                    Category = product.Category.Name,
+                    Category = product.Category?.Name ?? "",
                     Quantity = product.Quantity,
                     Price = (double)product.Price
                 });
             }
 
-            // Configure search and filtering
-            productsView = CollectionViewSource.GetDefaultView(products);
+            productsView =
+                CollectionViewSource.GetDefaultView(products);
+
             productsView.Filter = FilterProducts;
 
-            // Show products in the table
             ProductsDataGrid.ItemsSource = productsView;
 
-            // Update statistics
             UpdateStatistics();
         }
 
-
+        // ======================================
         // SEARCH AND CATEGORY FILTER
+        // ======================================
 
         private bool FilterProducts(object item)
         {
@@ -72,24 +117,24 @@ namespace InventoryManagementSystem.Views
             bool matchesSearch =
                 product.Name.Contains(
                     search,
-                    StringComparison.OrdinalIgnoreCase
-                ) ||
+                    StringComparison.OrdinalIgnoreCase) ||
                 product.Category.Contains(
                     search,
-                    StringComparison.OrdinalIgnoreCase
-                );
+                    StringComparison.OrdinalIgnoreCase);
 
-            string category = "All Categories";
+            string selectedCategory = "All Categories";
 
             if (CategoryComboBox.SelectedItem is ComboBoxItem selected)
             {
-                category = selected.Content?.ToString()
-                           ?? "All Categories";
+                selectedCategory =
+                    selected.Content?.ToString() ?? "All Categories";
             }
 
             bool matchesCategory =
-                category == "All Categories" ||
-                product.Category == category;
+                selectedCategory == "All Categories" ||
+                product.Category.Equals(
+                    selectedCategory,
+                    StringComparison.OrdinalIgnoreCase);
 
             return matchesSearch && matchesCategory;
         }
@@ -108,11 +153,14 @@ namespace InventoryManagementSystem.Views
             productsView?.Refresh();
         }
 
+        // ======================================
         // UPDATE STATISTICS
+        // ======================================
 
         private void UpdateStatistics()
         {
-            TotalProductsText.Text = products.Count.ToString();
+            TotalProductsText.Text =
+                products.Count.ToString();
 
             InStockText.Text = products
                 .Count(p => p.Quantity > 10)
@@ -122,27 +170,38 @@ namespace InventoryManagementSystem.Views
                 .Count(p => p.Quantity <= 10)
                 .ToString();
 
-            CategoriesText.Text = products
-                .Select(p => p.Category)
-                .Distinct()
-                .Count()
+            CategoriesText.Text =
+                Math.Max(0, CategoryComboBox.Items.Count - 1)
                 .ToString();
         }
 
-        // ADD PRODUCT
+        // ======================================
+        // ENGLISH MESSAGE WINDOW
+        // ======================================
 
+        private void ShowMessage(string title, string message)
+        {
+            EnglishDialog.Alert(
+                Window.GetWindow(this),
+                title,
+                message);
+        }
+
+        // ======================================
+        // ADD PRODUCT - CREATE
+        // ======================================
 
         private void AddProductButton_Click(
-            object sender, RoutedEventArgs e)
+            object sender,
+            RoutedEventArgs e)
         {
-            Product? newProduct = ShowProductDialog(null);
-
-            if (newProduct == null)
-                return;
-
             try
             {
-                // Find the selected category in SQL Server
+                Product? newProduct = ShowProductDialog(null);
+
+                if (newProduct == null)
+                    return;
+
                 var category = categoryService.GetAllCategories()
                     .FirstOrDefault(c =>
                         c.Name.Equals(
@@ -151,44 +210,37 @@ namespace InventoryManagementSystem.Views
 
                 if (category == null)
                 {
-                    MessageBox.Show(
-                        "Selected category does not exist. " +
-                        "Please add it in Categories first.",
+                    ShowMessage(
                         "Category Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-
+                        "Selected category does not exist. " +
+                        "Please add it in Categories first.");
                     return;
                 }
 
-                // CREATE - Save product to SQL Server
                 productService.AddProduct(
                     newProduct.Name,
                     category.CategoryId,
                     newProduct.Quantity,
                     Math.Round((decimal)newProduct.Price, 2));
 
-                // Reload products from SQL Server
+                LoadCategoryFilter();
                 LoadProducts();
 
-                MessageBox.Show(
-                    "Product added successfully!",
+                ShowMessage(
                     "Success",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Product added successfully!");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Error adding product: {ex.Message}",
+                ShowMessage(
                     "Database Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    $"Error adding product: {ex.Message}");
             }
         }
 
-
-        // EDIT PRODUCT
+        // ======================================
+        // EDIT PRODUCT - UPDATE
+        // ======================================
 
         private void EditProductButton_Click(
             object sender,
@@ -196,28 +248,55 @@ namespace InventoryManagementSystem.Views
         {
             if (sender is not Button button ||
                 button.DataContext is not Product selectedProduct)
+                return;
+
+            try
             {
-                return;
+                Product? editedProduct =
+                    ShowProductDialog(selectedProduct);
+
+                if (editedProduct == null)
+                    return;
+
+                var category = categoryService.GetAllCategories()
+                    .FirstOrDefault(c =>
+                        c.Name.Equals(
+                            editedProduct.Category,
+                            StringComparison.OrdinalIgnoreCase));
+
+                if (category == null)
+                {
+                    ShowMessage(
+                        "Category Error",
+                        "Selected category does not exist.");
+                    return;
+                }
+
+                productService.UpdateProduct(
+                    selectedProduct.ProductId,
+                    editedProduct.Name,
+                    category.CategoryId,
+                    editedProduct.Quantity,
+                    Math.Round((decimal)editedProduct.Price, 2));
+
+                LoadCategoryFilter();
+                LoadProducts();
+
+                ShowMessage(
+                    "Success",
+                    "Product updated successfully!");
             }
-
-            Product? editedProduct =
-                ShowProductDialog(selectedProduct);
-
-            if (editedProduct == null)
-                return;
-
-            selectedProduct.Name = editedProduct.Name;
-            selectedProduct.Category = editedProduct.Category;
-            selectedProduct.Quantity = editedProduct.Quantity;
-            selectedProduct.Price = editedProduct.Price;
-
-            productsView?.Refresh();
-            ProductsDataGrid.Items.Refresh();
-
-            UpdateStatistics();
+            catch (Exception ex)
+            {
+                ShowMessage(
+                    "Database Error",
+                    $"Error updating product: {ex.Message}");
+            }
         }
 
-        // DELETE PRODUCT
+        // ======================================
+        // DELETE PRODUCT - DELETE
+        // ======================================
 
         private void DeleteProductButton_Click(
             object sender,
@@ -225,31 +304,55 @@ namespace InventoryManagementSystem.Views
         {
             if (sender is not Button button ||
                 button.DataContext is not Product selectedProduct)
-            {
                 return;
-            }
 
-            MessageBoxResult result = MessageBox.Show(
-                $"Are you sure you want to delete '{selectedProduct.Name}'?",
+            bool confirmed = EnglishDialog.Confirm(
+                Window.GetWindow(this),
                 "Delete Product",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning
-            );
+                $"Are you sure you want to delete '{selectedProduct.Name}'?");
 
-            if (result != MessageBoxResult.Yes)
+            if (!confirmed)
                 return;
 
-            products.Remove(selectedProduct);
+            try
+            {
+                productService.DeleteProduct(
+                    selectedProduct.ProductId);
 
-            productsView?.Refresh();
-            UpdateStatistics();
+                LoadCategoryFilter();
+                LoadProducts();
+
+                ShowMessage(
+                    "Success",
+                    "Product deleted successfully!");
+            }
+            catch (Exception ex)
+            {
+                ShowMessage(
+                    "Database Error",
+                    $"Error deleting product: {ex.Message}");
+            }
         }
 
+        // ======================================
         // ADD / EDIT PRODUCT DIALOG
+        // ======================================
 
         private Product? ShowProductDialog(Product? existingProduct)
         {
             bool isEditing = existingProduct != null;
+
+            var categories = categoryService.GetAllCategories();
+
+            if (categories.Count == 0)
+            {
+                ShowMessage(
+                    "No Categories",
+                    "Please create a category before adding a product.");
+                return null;
+            }
+
+            Window? owner = Window.GetWindow(this);
 
             Window dialog = new Window
             {
@@ -260,21 +363,26 @@ namespace InventoryManagementSystem.Views
                 Width = 460,
                 Height = 570,
 
-                WindowStartupLocation =
-                    WindowStartupLocation.CenterOwner,
-
-                Owner = Window.GetWindow(this),
+                WindowStartupLocation = owner == null
+                    ? WindowStartupLocation.CenterScreen
+                    : WindowStartupLocation.CenterOwner,
 
                 ResizeMode = ResizeMode.NoResize,
-                Background = Brushes.White
+                Background = Brushes.White,
+                ShowInTaskbar = false
             };
+
+            if (owner != null)
+                dialog.Owner = owner;
 
             StackPanel mainPanel = new StackPanel
             {
                 Margin = new Thickness(28)
             };
 
-            TextBlock heading = new TextBlock
+            // HEADER
+
+            mainPanel.Children.Add(new TextBlock
             {
                 Text = isEditing
                     ? "Edit Product"
@@ -284,13 +392,12 @@ namespace InventoryManagementSystem.Views
                 FontWeight = FontWeights.Bold,
 
                 Foreground = new SolidColorBrush(
-                    Color.FromRgb(25, 40, 63)
-                ),
+                    Color.FromRgb(25, 40, 63)),
 
                 Margin = new Thickness(0, 0, 0, 6)
-            };
+            });
 
-            TextBlock subtitle = new TextBlock
+            mainPanel.Children.Add(new TextBlock
             {
                 Text = isEditing
                     ? "Update the product information."
@@ -299,43 +406,46 @@ namespace InventoryManagementSystem.Views
                 FontSize = 12,
 
                 Foreground = new SolidColorBrush(
-                    Color.FromRgb(137, 149, 168)
-                ),
+                    Color.FromRgb(137, 149, 168)),
 
                 Margin = new Thickness(0, 0, 0, 22)
-            };
-
-            mainPanel.Children.Add(heading);
-            mainPanel.Children.Add(subtitle);
+            });
 
             // PRODUCT NAME
 
             TextBox nameBox = CreateTextBox();
+
             nameBox.Text = existingProduct?.Name ?? "";
 
             AddField(mainPanel, "PRODUCT NAME", nameBox);
 
-            // CATEGORY
+            // CATEGORY - LOAD FROM DATABASE
 
             ComboBox categoryBox = new ComboBox
             {
                 Height = 40,
                 FontSize = 13,
                 Padding = new Thickness(9),
-
                 Margin = new Thickness(0, 0, 0, 15),
 
                 Foreground = new SolidColorBrush(
-                    Color.FromRgb(38, 54, 77)
-                )
+                    Color.FromRgb(38, 54, 77))
             };
 
-            categoryBox.Items.Add("Electronics");
-            categoryBox.Items.Add("Furniture");
-            categoryBox.Items.Add("Accessories");
+            foreach (var category in categories)
+            {
+                categoryBox.Items.Add(category.Name);
+            }
 
-            categoryBox.SelectedItem =
-                existingProduct?.Category ?? "Electronics";
+            if (isEditing &&
+                categoryBox.Items.Contains(existingProduct!.Category))
+            {
+                categoryBox.SelectedItem = existingProduct.Category;
+            }
+            else
+            {
+                categoryBox.SelectedIndex = 0;
+            }
 
             AddField(mainPanel, "CATEGORY", categoryBox);
 
@@ -348,18 +458,17 @@ namespace InventoryManagementSystem.Views
 
             AddField(mainPanel, "QUANTITY", quantityBox);
 
-            // PRICE
+            // UNIT PRICE
 
             TextBox priceBox = CreateTextBox();
 
             priceBox.Text = existingProduct?.Price.ToString(
                 "F2",
-                CultureInfo.InvariantCulture
-            ) ?? "0.00";
+                CultureInfo.InvariantCulture) ?? "0.00";
 
             AddField(mainPanel, "UNIT PRICE", priceBox);
 
-            // ERROR MESSAGE
+            // VALIDATION MESSAGE
 
             TextBlock errorText = new TextBlock
             {
@@ -371,42 +480,41 @@ namespace InventoryManagementSystem.Views
 
             mainPanel.Children.Add(errorText);
 
-            // BUTTONS
+            // BUTTON CONTAINER
 
             StackPanel buttons = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-
-                HorizontalAlignment =
-                    HorizontalAlignment.Right,
-
+                HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(0, 10, 0, 0)
             };
+
+            // CANCEL BUTTON
 
             Button cancelButton = new Button
             {
                 Content = "Cancel",
                 Width = 95,
                 Height = 40,
-
                 Margin = new Thickness(0, 0, 10, 0),
 
                 Background = new SolidColorBrush(
-                    Color.FromRgb(242, 245, 250)
-                ),
+                    Color.FromRgb(242, 245, 250)),
 
                 Foreground = new SolidColorBrush(
-                    Color.FromRgb(52, 64, 84)
-                ),
+                    Color.FromRgb(52, 64, 84)),
 
                 BorderThickness = new Thickness(0),
-                Cursor = System.Windows.Input.Cursors.Hand
+                Cursor = System.Windows.Input.Cursors.Hand,
+                IsCancel = true
             };
 
             cancelButton.Click += (s, args) =>
             {
                 dialog.DialogResult = false;
             };
+
+            // SAVE BUTTON
 
             Button saveButton = new Button
             {
@@ -418,15 +526,16 @@ namespace InventoryManagementSystem.Views
                 Height = 40,
 
                 Background = new SolidColorBrush(
-                    Color.FromRgb(65, 105, 225)
-                ),
+                    Color.FromRgb(65, 105, 225)),
 
                 Foreground = Brushes.White,
                 FontWeight = FontWeights.SemiBold,
                 BorderThickness = new Thickness(0),
-
-                Cursor = System.Windows.Input.Cursors.Hand
+                Cursor = System.Windows.Input.Cursors.Hand,
+                IsDefault = true
             };
+
+            // SAVE BUTTON VALIDATION
 
             saveButton.Click += (s, args) =>
             {
@@ -439,7 +548,6 @@ namespace InventoryManagementSystem.Views
                 {
                     errorText.Text =
                         "Please enter a product name.";
-
                     return;
                 }
 
@@ -447,7 +555,6 @@ namespace InventoryManagementSystem.Views
                 {
                     errorText.Text =
                         "Please select a category.";
-
                     return;
                 }
 
@@ -457,34 +564,39 @@ namespace InventoryManagementSystem.Views
                 {
                     errorText.Text =
                         "Quantity must be a valid non-negative whole number.";
-
                     return;
                 }
 
                 string priceInput = priceBox.Text.Trim();
 
-                bool validPrice =
-                    double.TryParse(
-                        priceInput,
-                        NumberStyles.Number,
-                        CultureInfo.InvariantCulture,
-                        out double price
-                    ) ||
-                    double.TryParse(
-                        priceInput,
-                        NumberStyles.Number,
-                        CultureInfo.CurrentCulture,
-                        out price
-                    );
+                NumberStyles priceStyle =
+                    NumberStyles.AllowDecimalPoint |
+                    NumberStyles.AllowLeadingSign;
 
-                if (!validPrice ||
-                    price < 0 ||
-                    double.IsNaN(price) ||
-                    double.IsInfinity(price))
+                bool validPrice =
+                    decimal.TryParse(
+                        priceInput,
+                        priceStyle,
+                        CultureInfo.InvariantCulture,
+                        out decimal price)
+                    ||
+                    decimal.TryParse(
+                        priceInput,
+                        priceStyle,
+                        CultureInfo.CurrentCulture,
+                        out price);
+
+                if (!validPrice || price < 0)
                 {
                     errorText.Text =
                         "Please enter a valid non-negative price.";
+                    return;
+                }
 
+                if (price > 9999999999999999m)
+                {
+                    errorText.Text =
+                        "The price is too large.";
                     return;
                 }
 
@@ -494,7 +606,7 @@ namespace InventoryManagementSystem.Views
                     Name = name,
                     Category = category,
                     Quantity = quantity,
-                    Price = price
+                    Price = (double)price
                 };
 
                 dialog.Tag = result;
@@ -506,11 +618,15 @@ namespace InventoryManagementSystem.Views
 
             mainPanel.Children.Add(buttons);
 
+            // SCROLLABLE DIALOG CONTENT
+
             ScrollViewer scrollViewer = new ScrollViewer
             {
                 Content = mainPanel,
                 VerticalScrollBarVisibility =
-                    ScrollBarVisibility.Auto
+                    ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility =
+                    ScrollBarVisibility.Disabled
             };
 
             dialog.Content = scrollViewer;
@@ -526,7 +642,9 @@ namespace InventoryManagementSystem.Views
             return null;
         }
 
+        // ======================================
         // TEXTBOX DESIGN
+        // ======================================
 
         private static TextBox CreateTextBox()
         {
@@ -538,14 +656,12 @@ namespace InventoryManagementSystem.Views
                 Padding = new Thickness(12, 8, 12, 8),
 
                 BorderBrush = new SolidColorBrush(
-                    Color.FromRgb(225, 230, 239)
-                ),
+                    Color.FromRgb(225, 230, 239)),
 
                 BorderThickness = new Thickness(1),
 
                 Foreground = new SolidColorBrush(
-                    Color.FromRgb(38, 54, 77)
-                ),
+                    Color.FromRgb(38, 54, 77)),
 
                 VerticalContentAlignment =
                     VerticalAlignment.Center,
@@ -553,6 +669,10 @@ namespace InventoryManagementSystem.Views
                 Margin = new Thickness(0, 0, 0, 15)
             };
         }
+
+        // ======================================
+        // FORM FIELD DESIGN
+        // ======================================
 
         private static void AddField(
             Panel panel,
@@ -566,8 +686,7 @@ namespace InventoryManagementSystem.Views
                 FontWeight = FontWeights.Bold,
 
                 Foreground = new SolidColorBrush(
-                    Color.FromRgb(119, 131, 152)
-                ),
+                    Color.FromRgb(119, 131, 152)),
 
                 Margin = new Thickness(0, 0, 0, 8)
             };
@@ -577,7 +696,9 @@ namespace InventoryManagementSystem.Views
         }
     }
 
-    // PRODUCT MODEL
+    // ======================================
+    // UI PRODUCT MODEL
+    // ======================================
 
     public class Product
     {

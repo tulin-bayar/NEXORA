@@ -11,11 +11,17 @@ namespace InventoryManagementSystem.Data
         {
         }
 
-        public DbSet<Category> Categories { get; set; }
-            = null!;
+        // DATABASE TABLES
 
-        public DbSet<Product> Products { get; set; }
-            = null!;
+        public DbSet<Category> Categories { get; set; } = null!;
+
+        public DbSet<Product> Products { get; set; } = null!;
+
+        public DbSet<StockMovement> StockMovements { get; set; } = null!;
+        public DbSet<Supplier> Suppliers { get; set; } = null!;
+
+        public DbSet<ApplicationSetting> ApplicationSettings { get; set; } = null!;
+
 
         protected override void OnModelCreating(
             ModelBuilder modelBuilder)
@@ -23,6 +29,7 @@ namespace InventoryManagementSystem.Data
             base.OnModelCreating(modelBuilder);
 
             // CATEGORY
+
             modelBuilder.Entity<Category>()
                 .HasKey(c => c.CategoryId);
 
@@ -32,6 +39,7 @@ namespace InventoryManagementSystem.Data
                 .HasMaxLength(100);
 
             // PRODUCT
+
             modelBuilder.Entity<Product>()
                 .HasKey(p => p.ProductId);
 
@@ -40,11 +48,34 @@ namespace InventoryManagementSystem.Data
                 .IsRequired()
                 .HasMaxLength(150);
 
-            // ONE-TO-MANY RELATIONSHIP
+            // CATEGORY - PRODUCT RELATIONSHIP
+
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // STOCK MOVEMENT
+
+            modelBuilder.Entity<StockMovement>()
+                .HasKey(m => m.MovementId);
+
+            modelBuilder.Entity<StockMovement>()
+                .Property(m => m.MovementType)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<StockMovement>()
+                .Property(m => m.Note)
+                .HasMaxLength(500);
+
+            // PRODUCT - STOCK MOVEMENT RELATIONSHIP
+
+            modelBuilder.Entity<StockMovement>()
+                .HasOne(m => m.Product)
+                .WithMany()
+                .HasForeignKey(m => m.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
