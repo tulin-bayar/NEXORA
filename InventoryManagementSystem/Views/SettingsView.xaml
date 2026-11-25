@@ -206,12 +206,13 @@
                                FontSize="12"
                                Margin="0,5,0,18"/>
 
+
                     <ComboBox x:Name="ThemeBox"
-                              SelectedIndex="0"
-                              Style="{StaticResource SettingsCombo}">
+                        SelectedIndex="0"
+                         Style="{StaticResource SettingsCombo}">
                         <ComboBoxItem Content="Light Mode"/>
-                        <ComboBoxItem Content="Dark Mode (Coming Soon)"/>
                     </ComboBox>
+
                 </StackPanel>
             </Border>
 
