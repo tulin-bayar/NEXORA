@@ -507,56 +507,73 @@ The application prevents outgoing transactions that exceed available stock.
 
 ---
 
-## 9. Team Members and Contributions
 
-NEXORA was developed collaboratively by **Aygul Guliyeva** and **Tülin Bayar**.
+## 9. Team Members and Responsibilities
 
-### Aygul Guliyeva
-**Role: User Interface & Initial Frontend Development**
+NEXORA is a collaborative project developed by a three-member team.
 
-Main contributions:
-
-- Created the initial WPF application structure.
-- Designed the desktop interface using XAML.
-- Developed the initial Dashboard layout.
-- Designed the Products and Categories screens.
-- Designed the Stock Movements interface.
-- Designed the Suppliers management interface.
-- Designed the Reports and Settings screens.
-- Implemented the original sidebar navigation.
-- Created the initial forms, tables, buttons, and event handlers.
-- Added demonstration data and initial interface behavior.
-- Established the application's visual styling and layout.
+The project work is organized into three equally important technical areas: backend and database development, frontend and user interface development, and application modules and quality assurance.
 
 ### Tülin Bayar
-**Role: Backend, Database & System Integration**
+**Role: Backend & Database Developer**
 
-Main contributions:
+Responsibilities:
 
-- Configured the .NET 10 and Entity Framework Core database integration.
-- Established the connection to Microsoft SQL Server.
-- Created the database context and context factory.
-- Designed and implemented the EF Core entity models.
-- Created and applied database migrations.
-- Implemented the Category and Product CRUD services.
-- Connected Categories and Products to SQL Server.
-- Implemented stock movement processing and transaction handling.
-- Added stock validation to prevent insufficient-stock operations.
-- Implemented the Supplier CRUD service and database integration.
-- Developed the Dashboard service using real database statistics.
-- Connected Reports and CSV export to database records.
-- Implemented persistent application settings.
-- Updated WPF code-behind logic to replace demonstration data with real data.
-- Added custom English-language confirmation and information dialogs.
-- Improved selected interface behaviors and layouts.
-- Performed functional testing of CRUD operations, persistence, stock calculations, and reporting.
-- Managed database integration commits and project updates on GitHub.
+- Design and configure the SQL Server database.
+- Implement Entity Framework Core integration.
+- Develop database entities and relationships.
+- Create and manage database migrations.
+- Implement CRUD operations and data access services.
+- Develop stock management business logic.
+- Implement Stock In and Stock Out transactions.
+- Ensure data consistency and validation.
+- Integrate database services with application modules.
+- Test database connectivity and data persistence.
 
-### Collaboration
+### Aygul Guliyeva
+**Role: Frontend & UI/UX Developer**
 
-The project combines Aygul's initial user interface implementation with Tülin's backend development and database integration.
+Responsibilities:
 
-The application was developed using Git and GitHub to manage source code and track changes.
+- Design the WPF application interface using XAML.
+- Develop the main window and navigation system.
+- Implement the Dashboard user interface.
+- Develop Products and Categories management screens.
+- Create interactive forms, buttons, and tables.
+- Implement user interface event handling.
+- Design Stock Movements and Suppliers interfaces.
+- Create Reports and Settings screen layouts.
+- Maintain visual consistency across the application.
+- Test navigation and user interactions.
+
+### Gokhan Percem
+**Role: Application Modules & Quality Assurance Developer**
+
+Assigned responsibilities:
+
+- Review and improve the Suppliers module.
+- Improve reporting functionality and data presentation.
+- Enhance CSV export functionality.
+- Review and improve Settings form validation.
+- Implement additional error handling where necessary.
+- Improve user feedback for invalid operations.
+- Validate inventory report calculations.
+- Develop and execute functional test cases.
+- Fix defects identified during testing.
+- Support final application integration and documentation.
+
+### Team Contribution Structure
+
+| Team Member | Primary Area | Target Workload |
+|---|---|---|
+| Tülin Bayar | Backend and Database | 33% |
+| Aygul Guliyeva | Frontend and UI/UX | 33% |
+| Gokhan Percem | Application Modules and Quality Assurance | 34% |
+
+Each team member is responsible for a major part of the project and participates in the final application demonstration.
+
+The team combines database engineering, desktop interface development, application functionality, and quality assurance to deliver a complete inventory management system.
+
 
 ---
 
